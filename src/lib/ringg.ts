@@ -80,9 +80,17 @@ export class RinggClient {
     formData.append('call_config', JSON.stringify({ from_number_id: fromNumberId }));
     formData.append('country_code', countryCode);
     const now = new Date();
-    formData.append('campaign_start_time', now.toISOString());
     const endTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    formData.append('campaign_end_time', endTime.toISOString());
+    const fmtRingg = (d: Date) => {
+      const dd = String(d.getUTCDate()).padStart(2, '0');
+      const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const yyyy = d.getUTCFullYear();
+      const hh = String(d.getUTCHours()).padStart(2, '0');
+      const min = String(d.getUTCMinutes()).padStart(2, '0');
+      return `${dd}/${mm}/${yyyy}, ${hh}:${min}`;
+    };
+    formData.append('campaign_start_time', fmtRingg(now));
+    formData.append('campaign_end_time', fmtRingg(endTime));
 
     return this.request('POST', '/campaign/save', formData);
   }
