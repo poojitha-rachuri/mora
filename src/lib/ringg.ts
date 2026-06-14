@@ -74,6 +74,8 @@ export class RinggClient {
     formData.append('name', params.name);
     formData.append('variables_map', JSON.stringify({ mobile_number: 'mobile_number', name: 'name' }));
     if (agentId) formData.append('agent_id', agentId);
+    const fromNumberId = cleanEnv(process.env.RINGG_FROM_NUMBER_ID);
+    formData.append('call_config', JSON.stringify({ from_number_id: fromNumberId }));
 
     return this.request('POST', '/campaign/save', formData);
   }
