@@ -61,11 +61,8 @@ export default function NewCampaignPage() {
 
       const campaign = await createRes.json();
 
-      // Start the campaign (non-fatal — redirect even if Ringg.ai is unavailable)
-      await fetch(`/api/campaigns/${campaign.id}/start`, { method: "POST" }).catch(() => {});
-
       setLaunched({ id: campaign.id });
-      setTimeout(() => router.push(`/brand/campaigns/${campaign.id}/analytics`), 2000);
+      setTimeout(() => router.push(`/brand/campaigns/${campaign.id}/analytics`), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Launch failed");
     } finally {
@@ -77,9 +74,9 @@ export default function NewCampaignPage() {
     return (
       <div className="max-w-lg mx-auto text-center py-16">
         <div className="text-5xl mb-3">🚀</div>
-        <h2 className="text-xl font-bold">Campaign Launched!</h2>
+        <h2 className="text-xl font-bold">Campaign Created!</h2>
         <p className="text-slate-500 mt-2">
-          Ava is now calling your buyers. Redirecting to analytics...
+          Saved as draft. Redirecting to campaign dashboard...
         </p>
       </div>
     );
@@ -135,7 +132,7 @@ export default function NewCampaignPage() {
           className="w-full"
           size="lg"
         >
-          {isLaunching ? "Launching..." : `🎙 Launch Campaign (${csvRows.length} contacts)`}
+          {isLaunching ? "Saving..." : `Save Campaign (${csvRows.length} contacts)`}
         </Button>
 
         <p className="text-xs text-slate-400 text-center">

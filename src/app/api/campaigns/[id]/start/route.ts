@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCampaign, updateCampaign } from '@/lib/db';
+import { getCampaign, updateCampaign, getCallsByCampaign } from '@/lib/db';
 import { ringg } from '@/lib/ringg';
 
 export async function POST(
@@ -17,6 +17,25 @@ export async function POST(
     const fromNumberId = (process.env.RINGG_FROM_NUMBER_ID ?? '').replace(/^﻿/, '').trim() || undefined;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
     const callbackUrl = `${appUrl}/api/webhooks/ringg`;
+
+    // If no ringg_list_id, try creating the campaign in Ringg.ai now
+    if (!campaign.ringg_list_id && agentId && fromNumberId) {
+      try {
+        const calls = await getCallsByCampaign(id);
+        const contacts = calls.length > 0
+          ? calls.map(c => ({ mobile_number: c.contact_phone ?? '', name: c.contact_name ?? '' }))
+          : [{ mobile_number: '9999999999', name: 'Test' }];
+        const ringgResult = await ringg.createCampaign({ name: campaign.campaign_name, contacts });
+        await updateCampaign(id, {
+          ringg_list_id: ringgResult.list_id,
+          ringg_campaign_id: ringgResult.campaign_id,
+        });
+        campaign.ringg_list_id = ringgResult.list_id;
+        campaign.ringg_campaign_id = ringgResult.campaign_id;
+      } catch (err) {
+        console.error('[campaigns/start] Ringg.ai createCampaign failed (continuing):', err);
+      }
+    }
 
     // Attempt Ringg.ai campaign start — non-fatal if missing IDs or API fails
     if (campaign.ringg_list_id && agentId && fromNumberId) {
