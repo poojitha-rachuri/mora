@@ -1,10 +1,14 @@
 const RINGG_BASE_URL = 'https://prod-api.ringg.ai/ca/api/v0';
 
+function cleanEnv(val: string | undefined): string {
+  return (val ?? '').replace(/^﻿/, '').trim();
+}
+
 export class RinggClient {
   private apiKey: string;
 
   constructor(apiKey: string) {
-    this.apiKey = apiKey;
+    this.apiKey = cleanEnv(apiKey);
   }
 
   private async request<T>(
@@ -32,10 +36,12 @@ export class RinggClient {
 
     if (!response.ok) {
       const text = await response.text().catch(() => response.statusText);
-      throw new Error(`Ringg.ai API error ${response.status}: ${text}`);
+      throw new Error(`Ringg.ai API error ${response.status} on ${method} ${path}: ${text}`);
     }
 
-    return response.json() as Promise<T>;
+    const json = await response.json();
+    console.log(`[ringg] ${method} ${path} →`, JSON.stringify(json).slice(0, 200));
+    return json as T;
   }
 
   async getAssistants(): Promise<unknown[]> {
@@ -52,13 +58,14 @@ export class RinggClient {
   }): Promise<{ list_id: string; campaign_id: string }> {
     const formData = new FormData();
 
-    // Create CSV content
-    const headers = Object.keys(params.contacts[0] ?? { mobile_number: '', name: '' });
+    // Ringg.ai only needs mobile_number and name columns
     const csvLines = [
-      headers.join(','),
-      ...params.contacts.map((c) =>
-        headers.map((h) => `"${(c[h] ?? '').replace(/"/g, '""')}"`).join(',')
-      ),
+      'mobile_number,name',
+      ...params.contacts.map((c) => {
+        const phone = (c.mobile_number ?? '').replace(/"/g, '""');
+        const name = (c.name ?? '').replace(/"/g, '""');
+        return `"${phone}","${name}"`;
+      }),
     ];
     const csvBlob = new Blob([csvLines.join('\n')], { type: 'text/csv' });
     formData.append('file', csvBlob, `${params.name}.csv`);
@@ -139,4 +146,4 @@ export class RinggClient {
   }
 }
 
-export const ringg = new RinggClient(process.env.RINGG_API_KEY ?? '');
+export const ringg = new RinggClient(cleanEnv(process.env.RINGG_API_KEY));
