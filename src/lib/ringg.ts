@@ -55,7 +55,9 @@ export class RinggClient {
   async createCampaign(params: {
     name: string;
     contacts: Array<{ mobile_number: string; name?: string; [key: string]: string | undefined }>;
+    agentId?: string;
   }): Promise<{ list_id: string; campaign_id: string }> {
+    const agentId = params.agentId ?? cleanEnv(process.env.RINGG_AGENT_ID);
     const formData = new FormData();
 
     // Ringg.ai only needs mobile_number and name columns
@@ -71,6 +73,7 @@ export class RinggClient {
     formData.append('file', csvBlob, `${params.name}.csv`);
     formData.append('name', params.name);
     formData.append('variables_map', JSON.stringify({ mobile_number: 'mobile_number', name: 'name' }));
+    if (agentId) formData.append('agent_id', agentId);
 
     return this.request('POST', '/campaign/save', formData);
   }
