@@ -79,9 +79,10 @@ export class RinggClient {
     const fromNumberId = cleanEnv(process.env.RINGG_FROM_NUMBER_ID);
     formData.append('call_config', JSON.stringify({ from_number_id: fromNumberId }));
     formData.append('country_code', countryCode);
-    const now = new Date(Date.now() + 6 * 60 * 1000); // 6 min in future (Ringg requires 5+)
-    const endTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const fmtRingg = (d: Date) => {
+    // Ringg.ai uses IST (UTC+5:30). Format times in IST with 10min start buffer.
+    const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+    const fmtRingg = (utcMs: number) => {
+      const d = new Date(utcMs + IST_OFFSET_MS);
       const dd = String(d.getUTCDate()).padStart(2, '0');
       const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
       const yyyy = d.getUTCFullYear();
@@ -89,8 +90,10 @@ export class RinggClient {
       const min = String(d.getUTCMinutes()).padStart(2, '0');
       return `${dd}/${mm}/${yyyy}, ${hh}:${min}`;
     };
-    formData.append('campaign_start_time', fmtRingg(now));
-    formData.append('campaign_end_time', fmtRingg(endTime));
+    const startMs = Date.now() + 10 * 60 * 1000;
+    const endMs = startMs + 7 * 24 * 60 * 60 * 1000;
+    formData.append('campaign_start_time', fmtRingg(startMs));
+    formData.append('campaign_end_time', fmtRingg(endMs));
 
     return this.request('POST', '/campaign/save', formData);
   }
