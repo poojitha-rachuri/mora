@@ -184,8 +184,8 @@ const WASH_NAMES = [
 export const maxDuration = 60;
 
 export async function POST() {
-  const db = createServerClient();
   try {
+    const db = createServerClient();
     return await runSeed(db);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
