@@ -56,8 +56,10 @@ export class RinggClient {
     name: string;
     contacts: Array<{ mobile_number: string; name?: string; [key: string]: string | undefined }>;
     agentId?: string;
+    countryCode?: string;
   }): Promise<{ list_id: string; campaign_id: string }> {
     const agentId = params.agentId ?? cleanEnv(process.env.RINGG_AGENT_ID);
+    const countryCode = params.countryCode ?? '91';
     const formData = new FormData();
 
     // Ringg.ai only needs mobile_number and name columns
@@ -76,6 +78,7 @@ export class RinggClient {
     if (agentId) formData.append('agent_id', agentId);
     const fromNumberId = cleanEnv(process.env.RINGG_FROM_NUMBER_ID);
     formData.append('call_config', JSON.stringify({ from_number_id: fromNumberId }));
+    formData.append('country_code', countryCode);
 
     return this.request('POST', '/campaign/save', formData);
   }
