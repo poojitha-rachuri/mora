@@ -11,7 +11,7 @@ export default function BuyButton({ productName }: { productName: string }) {
       <Button
         className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
         size="lg"
-        onClick={() => window.open(`https://nykaa.com/search?q=${encodeURIComponent(productName)}`, "_blank")}
+        onClick={() => window.open("https://www.nykaa.com", "_blank")}
       >
         Shop on Nykaa →
       </Button>
