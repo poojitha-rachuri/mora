@@ -1,12 +1,19 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import type { CustomAnalysis, ProductIntelligence } from './types';
-import {
-  upsertCallRecord,
-  insertProductIntelligence,
-  recordWebhookEvent,
-} from './db';
+import { upsertCallRecord, insertProductIntelligence } from './db';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function getOpenRouter() {
+  return new OpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY || '',
+    defaultHeaders: {
+      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      'X-Title': 'TrueGlow',
+    },
+  });
+}
+
+const MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4-5';
 
 // Maps Ringg.ai custom_analysis JSON → product_intelligence row fields
 export function extractProductIntelligence(
@@ -42,7 +49,7 @@ export function extractProductIntelligence(
   };
 }
 
-// Claude enrichment: surfaces soft signals beyond structured extraction
+// Claude enrichment via OpenRouter — surfaces soft signals beyond structured extraction
 export async function enrichTranscript(
   transcript: Array<{ role: string; content: string }>,
   productName: string
@@ -52,8 +59,8 @@ export async function enrichTranscript(
       .map((t) => `${t.role === 'bot' ? 'Ava' : 'Customer'}: ${t.content}`)
       .join('\n');
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+    const response = await getOpenRouter().chat.completions.create({
+      model: MODEL,
       max_tokens: 512,
       messages: [
         {
@@ -75,10 +82,9 @@ Respond in 2-3 concise sentences with the most valuable contextual insight. Be s
       ],
     });
 
-    const content = message.content[0];
-    return content.type === 'text' ? content.text : null;
+    return response.choices[0].message.content ?? null;
   } catch (err) {
-    console.error('[analysis] Claude enrichment failed:', err);
+    console.error('[analysis] OpenRouter enrichment failed:', err);
     return null;
   }
 }
@@ -124,7 +130,7 @@ export async function processCompletedCall(event: {
       event.custom_analysis
     );
 
-    // Step 3: Claude transcript enrichment (graceful degradation)
+    // Step 3: Claude transcript enrichment via OpenRouter (graceful degradation)
     if (event.transcript && event.transcript.length > 0) {
       const enriched = await enrichTranscript(event.transcript, event.product_name);
       if (enriched) piData.enriched_context = enriched;
@@ -133,7 +139,7 @@ export async function processCompletedCall(event: {
     // Step 4: Insert product_intelligence row
     await insertProductIntelligence(piData);
 
-    // Step 5: Trigger marketplace recomputation (imported lazily to avoid circular deps)
+    // Step 5: Trigger marketplace recomputation
     const { recomputeMarketplaceProduct } = await import('./marketplace-aggregator');
     await recomputeMarketplaceProduct(event.product_name, event.brand_name);
   } catch (err) {

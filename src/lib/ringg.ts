@@ -100,14 +100,42 @@ export class RinggClient {
   async setupWebhooks(params: {
     agentId: string;
     callbackUrl: string;
-    secret?: string;
   }): Promise<{ success: boolean }> {
-    return this.request('PATCH', '/agent/v1', {
-      id: params.agentId,
-      webhook_url: params.callbackUrl,
-      webhook_secret: params.secret,
-      webhook_events: ['call_started', 'call_completed', 'all_processing_completed'],
+    await this.request('PATCH', '/agent/v1', {
+      agent_id: params.agentId,
+      operation: 'edit_event_subscriptions',
+      event_subscriptions: [
+        {
+          callback_url: params.callbackUrl,
+          event_type: ['call_started', 'call_completed', 'all_processing_completed'],
+        },
+      ],
     });
+    return { success: true };
+  }
+
+  async pushPrompt(params: {
+    agentId: string;
+    agentPrompt: string;
+  }): Promise<{ success: boolean }> {
+    await this.request('PATCH', '/agent/v1', {
+      agent_id: params.agentId,
+      operation: 'edit_prompt',
+      agent_prompt: params.agentPrompt,
+    });
+    return { success: true };
+  }
+
+  async pushCustomAnalysis(params: {
+    agentId: string;
+    customAnalysisPrompt: Record<string, string>;
+  }): Promise<{ success: boolean }> {
+    await this.request('PATCH', '/agent/v1', {
+      agent_id: params.agentId,
+      operation: 'edit_custom_analysis_prompt',
+      custom_analysis_prompt: params.customAnalysisPrompt,
+    });
+    return { success: true };
   }
 }
 

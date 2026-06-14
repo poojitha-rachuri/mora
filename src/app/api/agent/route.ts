@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildRinggAgentConfig, buildAvaPrompt } from '@/lib/agent-config'
 
-const RINGG_BASE = 'https://api.ringg.ai/v1'
+const RINGG_BASE = 'https://prod-api.ringg.ai/ca/api/v0'
 const API_KEY = process.env.RINGG_API_KEY!
 const AGENT_ID = process.env.RINGG_AGENT_ID!
 
-async function ringgFetch(path: string, options: RequestInit = {}) {
+async function ringgFetch(method: string, path: string, body?: Record<string, unknown>) {
   const res = await fetch(`${RINGG_BASE}${path}`, {
-    ...options,
+    method,
     headers: {
-      Authorization: `Bearer ${API_KEY}`,
+      'X-API-KEY': API_KEY,
       'Content-Type': 'application/json',
-      ...options.headers,
     },
+    body: body ? JSON.stringify(body) : undefined,
   })
   if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Ringg ${path} ${res.status}: ${body}`)
+    const text = await res.text().catch(() => res.statusText)
+    throw new Error(`Ringg ${method} ${path} ${res.status}: ${text}`)
   }
   return res.json()
 }
@@ -24,7 +24,7 @@ async function ringgFetch(path: string, options: RequestInit = {}) {
 // GET — fetch current agent config from Ringg.ai
 export async function GET() {
   try {
-    const agent = await ringgFetch(`/agents/${AGENT_ID}`)
+    const agent = await ringgFetch('GET', '/agent/v1')
     return NextResponse.json({ agent })
   } catch (err) {
     // Return default local config if Ringg.ai fetch fails
@@ -37,7 +37,7 @@ export async function GET() {
   }
 }
 
-// PUT — push updated prompt to Ringg.ai agent
+// PUT — push updated prompt + settings to Ringg.ai agent
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json()
@@ -45,13 +45,10 @@ export async function PUT(req: NextRequest) {
 
     const promptToUse = system_prompt || buildAvaPrompt({ category: category || 'serum' })
 
-    const updated = await ringgFetch(`/agents/${AGENT_ID}`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        system_prompt: promptToUse,
-        ...(voice && { voice }),
-        ...(max_duration_seconds && { max_duration_seconds }),
-      }),
+    const updated = await ringgFetch('PATCH', '/agent/v1', {
+      agent_id: AGENT_ID,
+      operation: 'edit_prompt',
+      agent_prompt: promptToUse,
     })
 
     return NextResponse.json({ success: true, agent: updated })

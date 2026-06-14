@@ -58,10 +58,13 @@ export async function POST(request: NextRequest) {
       const ringgResult = await ringg.createCampaign({
         name: campaignName,
         contacts: rows.map((r) => ({
+          // Pass every CSV column as a Ringg.ai template variable
+          ...r,
           mobile_number: r.mobile_number ?? r.phone ?? '',
           name: r.name ?? r.customer_name ?? '',
-          product_name: productName,
-          brand_name: brandName,
+          // Ensure product context is always present even if not in CSV
+          product_name: r.product_name || productName,
+          brand_name: r.brand_name || brandName,
         })),
       });
       ringgListId = ringgResult.list_id;

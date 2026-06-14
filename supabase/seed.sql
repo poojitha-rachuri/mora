@@ -1,80 +1,80 @@
--- TrueGlow Seed Data
--- Sample marketplace products with aggregated voice intelligence data
+-- TrueGlow Seed Data (schema v2)
 
-INSERT INTO marketplace_products (
-  product_name, brand_name, product_category, price_inr, description,
-  voice_trust_score, verified_call_count,
-  avg_satisfaction_overall, avg_satisfaction_efficacy, avg_satisfaction_texture,
-  avg_satisfaction_scent, avg_satisfaction_packaging, avg_satisfaction_value,
-  repurchase_rate, nps_average,
-  works_best_for, may_not_suit, insight_statements, common_qa, top_issues,
-  skin_type_breakdown, outcome_breakdown
-) VALUES
+insert into marketplace_products (
+  product_name, brand_name, category,
+  total_verified_conversations, voice_trust_score,
+  avg_texture, avg_effectiveness, avg_fragrance, avg_value, avg_packaging,
+  sentiment_distribution, repurchase_distribution,
+  works_best_for, not_ideal_for,
+  top_insights, common_questions, education_gaps, issue_summary
+) values
 (
-  'Glow Serum Pro', 'LumiSkin', 'serum', 2499.00,
-  'Advanced brightening serum with Vitamin C and Niacinamide for radiant, even-toned skin.',
-  87, 142,
-  4.3, 4.5, 4.2, 3.9, 4.4, 4.1,
-  78.5, 8.2,
-  '[{"profile": "Oily skin, 25-35", "reason": "Controls sebum while brightening", "match_pct": 91},
-    {"profile": "Combination skin", "reason": "Balances T-zone without over-drying", "match_pct": 85},
-    {"profile": "Dull/uneven skin tone", "reason": "Visible brightening within 3-4 weeks", "match_pct": 88}]',
-  '[{"profile": "Very dry skin", "reason": "May feel drying without added moisturizer"},
-    {"profile": "Sensitive skin", "reason": "High Vit C concentration may cause initial tingling"}]',
-  '[{"text": "78% of users saw visible brightening within 4 weeks", "stat": "78%", "category": "efficacy"},
-    {"text": "Most users apply morning and evening", "stat": "2x/day", "category": "usage"},
-    {"text": "Repurchase rate is nearly 4 in 5 users", "stat": "79%", "category": "loyalty"}]',
-  '[{"question": "How long before I see results?", "answer": "Most callers reported visible brightening in 3-4 weeks of consistent use.", "frequency": 38},
-    {"question": "Can I use it with retinol?", "answer": "Best used in the morning; use retinol at night to avoid irritation.", "frequency": 22}]',
-  '[{"issue": "Initial tingling on sensitive skin", "frequency": 18, "severity": "low"},
-    {"issue": "Oxidizes if not stored properly", "frequency": 12, "severity": "medium"}]',
-  '{"oily": 42, "combination": 33, "dry": 15, "normal": 10}',
-  '{"satisfied": 72, "churned": 8, "issue_reported": 12, "gift_buyer": 8}'
+  'Glow Serum Pro', 'LumiSkin', 'skincare_serum',
+  142, 87.0,
+  4.2, 4.5, 3.9, 4.1, 4.4,
+  '{"positive":108,"neutral":24,"negative":10}'::jsonb,
+  '{"definitely_yes":68,"probably_yes":43,"unsure":18,"probably_no":9,"definitely_no":4}'::jsonb,
+  '[{"profile":"oily skin","satisfaction":4.6,"note":"91% reported reduced shine within 3 weeks"},
+    {"profile":"combination skin","satisfaction":4.3,"note":"85% positive results on T-zone balance"}]'::jsonb,
+  '[{"profile":"very dry skin","reason":"Lightweight formula may not provide enough moisture"},
+    {"profile":"sensitive skin","reason":"High Vit C concentration causes initial tingling for ~18% of users"}]'::jsonb,
+  '["78% of users saw visible brightening within 4 weeks of consistent use",
+    "Oily-skin users are 2× more likely to repurchase vs dry-skin users",
+    "Texture scores dropped when customers layered over heavy moisturizer — best applied to bare skin"]'::jsonb,
+  '[{"question":"How long before I see results?","answer":"Most callers reported visible brightening in 3–4 weeks of consistent morning use."},
+    {"question":"Can I use it with retinol?","answer":"Best used in the morning; apply retinol at night to avoid irritation."}]'::jsonb,
+  '[{"mistake":"Applying after moisturizer","percentage":31,"tip":"Apply to clean skin before moisturizer for best absorption"},
+    {"mistake":"Skipping nights","percentage":22,"tip":"Evening use doubles brightening speed — consistency is key"}]'::jsonb,
+  '[{"issue":"Initial tingling on sensitive skin","percentage":13,"severity":"mild","is_dealbreaker":false},
+    {"issue":"Oxidizes if left open","percentage":8,"severity":"moderate","is_dealbreaker":false}]'::jsonb
 ),
 (
-  'HydraBoost Moisturizer', 'AquaDerm', 'moisturizer', 1299.00,
-  'Lightweight gel-cream moisturizer with Hyaluronic Acid for all-day hydration.',
-  82, 98,
-  4.1, 4.0, 4.6, 4.3, 4.0, 4.2,
-  72.3, 7.6,
-  '[{"profile": "Dry to normal skin", "reason": "Deep hydration without greasiness", "match_pct": 89},
-    {"profile": "Humid climates", "reason": "Gel texture absorbs quickly", "match_pct": 82}]',
-  '[{"profile": "Acne-prone skin", "reason": "Some users reported mild breakouts initially"},
-    {"profile": "Very oily skin", "reason": "May feel slightly heavy under makeup"}]',
-  '[{"text": "72% repurchase rate — highest in the moisturizer category", "stat": "72%", "category": "loyalty"},
-    {"text": "Users love the non-greasy finish for daytime use", "stat": "4.6/5 texture", "category": "texture"}]',
-  '[{"question": "Is it suitable for oily skin?", "answer": "It works best for dry to normal skin; oily skin users may prefer the lighter version.", "frequency": 31}]',
-  '[{"issue": "Slight tackiness in very humid weather", "frequency": 14, "severity": "low"},
-    {"issue": "Pump dispenser clogs occasionally", "frequency": 9, "severity": "low"}]',
-  '{"dry": 48, "normal": 30, "combination": 16, "oily": 6}',
-  '{"satisfied": 68, "churned": 12, "issue_reported": 14, "cross_sell": 6}'
+  'HydraBoost Moisturizer', 'AquaDerm', 'skincare_moisturizer',
+  98, 82.0,
+  4.6, 4.0, 4.3, 4.2, 4.0,
+  '{"positive":72,"neutral":18,"negative":8}'::jsonb,
+  '{"definitely_yes":45,"probably_yes":26,"unsure":18,"probably_no":6,"definitely_no":3}'::jsonb,
+  '[{"profile":"dry skin","satisfaction":4.7,"note":"89% reported all-day hydration"},
+    {"profile":"normal skin","satisfaction":4.2,"note":"82% positive results"}]'::jsonb,
+  '[{"profile":"oily skin","reason":"Gel-cream texture may feel heavy under makeup for oily skin types"},
+    {"profile":"acne-prone skin","reason":"Some users reported mild breakouts in the first 2 weeks"}]'::jsonb,
+  '["72% repurchase rate — highest in the moisturizer segment for this price range",
+    "Dry-skin users gave texture 4.7/5; oily-skin users averaged 3.4/5",
+    "Users who applied it within 60 seconds of washing had 40% better hydration retention"]'::jsonb,
+  '[{"question":"Is it suitable for oily skin?","answer":"It works best for dry to normal skin. Oily skin users may prefer applying only at night."},
+    {"question":"Can I use it under SPF?","answer":"Yes — 67% of callers use it as a moisturizer base before sunscreen."}]'::jsonb,
+  '[{"mistake":"Using too much product","percentage":28,"tip":"A pea-sized amount is enough — over-application causes the tackiness some users reported"},
+    {"mistake":"Not waiting before applying SPF","percentage":18,"tip":"Wait 60 seconds for the gel texture to absorb before layering sunscreen"}]'::jsonb,
+  '[{"issue":"Slight tackiness in humid weather","percentage":14,"severity":"mild","is_dealbreaker":false},
+    {"issue":"Pump clogs after 2-3 months","percentage":9,"severity":"mild","is_dealbreaker":false}]'::jsonb
 ),
 (
-  'ClearSkin Toner', 'PoreMinimize', 'toner', 799.00,
-  'Alcohol-free toner with Salicylic Acid and Witch Hazel for clear, pore-minimized skin.',
-  74, 67,
-  3.9, 4.1, 4.0, 3.7, 3.8, 4.3,
-  65.0, 7.1,
-  '[{"profile": "Oily/acne-prone skin", "reason": "Reduces visible pores and controls shine", "match_pct": 94},
-    {"profile": "Teens and young adults", "reason": "Effective for hormonal breakouts", "match_pct": 87}]',
-  '[{"profile": "Dry or sensitive skin", "reason": "Salicylic Acid can be drying"},
-    {"profile": "Rosacea-prone skin", "reason": "Witch Hazel may trigger flushing"}]',
-  '[{"text": "65% of users reported fewer breakouts within 2 weeks", "stat": "65%", "category": "efficacy"},
-    {"text": "Best value-for-money toner in the budget segment", "stat": "4.3/5 value", "category": "value"}]',
-  '[{"question": "How often should I use it?", "answer": "Once daily (evening) for sensitive skin; twice daily for oily/acne-prone.", "frequency": 28}]',
-  '[{"issue": "Slight drying effect with daily use", "frequency": 22, "severity": "medium"},
-    {"issue": "Scent is too strong for some users", "frequency": 11, "severity": "low"}]',
-  '{"oily": 61, "combination": 28, "normal": 8, "dry": 3}',
-  '{"satisfied": 58, "churned": 18, "issue_reported": 19, "cross_sell": 5}'
+  'ClearSkin Toner', 'PoreMinimize', 'skincare_toner',
+  67, 74.0,
+  4.0, 4.1, 3.7, 4.3, 3.8,
+  '{"positive":42,"neutral":16,"negative":9}'::jsonb,
+  '{"definitely_yes":28,"probably_yes":16,"unsure":14,"probably_no":6,"definitely_no":3}'::jsonb,
+  '[{"profile":"oily skin","satisfaction":4.4,"note":"94% reported fewer visible pores after 2 weeks"},
+    {"profile":"acne-prone skin","satisfaction":4.2,"note":"87% saw fewer breakouts within a month"}]'::jsonb,
+  '[{"profile":"dry skin","reason":"Salicylic Acid content is drying without a rich moisturizer follow-up"},
+    {"profile":"rosacea-prone skin","reason":"Witch Hazel triggers flushing in ~12% of users with rosacea"}]'::jsonb,
+  '["65% of oily-skin users reported fewer breakouts within 2 weeks",
+    "Best value-for-money toner in the under-₹1000 segment based on voice feedback",
+    "Users who used it twice daily saw 2× faster results vs once-daily users"]'::jsonb,
+  '[{"question":"How often should I use it?","answer":"Once daily (evening) for sensitive skin; twice daily for oily or acne-prone skin."},
+    {"question":"Can I use it around my eyes?","answer":"No — avoid the eye area. 3 callers reported mild stinging when it contacted the eye contour."}]'::jsonb,
+  '[{"mistake":"Applying without moisturizer follow-up","percentage":34,"tip":"Always follow with a moisturizer to prevent over-drying, especially for combination skin"},
+    {"mistake":"Using on broken or active pimples","percentage":19,"tip":"Avoid open lesions — use a targeted spot treatment instead and apply toner to surrounding skin"}]'::jsonb,
+  '[{"issue":"Drying effect with daily use","percentage":22,"severity":"mild","is_dealbreaker":false},
+    {"issue":"Strong scent for some users","percentage":11,"severity":"mild","is_dealbreaker":false}]'::jsonb
 )
-ON CONFLICT DO NOTHING;
+on conflict (product_name, brand_name) do nothing;
 
--- Sample demo campaign
-INSERT INTO campaigns (
-  name, product_name, product_category, brand_name, status,
-  total_contacts, calls_completed, calls_failed
-) VALUES (
-  'LumiSkin Q2 Feedback Campaign', 'Glow Serum Pro', 'serum', 'LumiSkin',
-  'completed', 150, 142, 8
-)
-ON CONFLICT DO NOTHING;
+-- Sample completed campaign
+insert into campaigns (
+  campaign_name, brand_name, product_name, category,
+  status, total_contacts, completed_calls
+) values (
+  'LumiSkin Q2 Feedback', 'LumiSkin', 'Glow Serum Pro', 'skincare_serum',
+  'completed', 150, 142
+) on conflict do nothing;

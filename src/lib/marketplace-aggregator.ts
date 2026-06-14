@@ -1,8 +1,19 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import type { ProductIntelligence, MarketplaceProduct } from './types';
 import { getProductIntelligenceForProduct, upsertMarketplaceProduct } from './db';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function getOpenRouter() {
+  return new OpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: process.env.OPENROUTER_API_KEY || '',
+    defaultHeaders: {
+      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      'X-Title': 'TrueGlow',
+    },
+  });
+}
+
+const MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4-5';
 
 function avg(vals: (number | undefined | null)[]): number {
   const valid = vals.filter((v): v is number => v != null);
@@ -64,12 +75,10 @@ export async function recomputeMarketplaceProduct(
   const sentimentDist = countBy(rows, (r) => r.overall_sentiment ?? 'neutral');
   const repurchaseDist = countBy(rows, (r) => r.repurchase_intent ?? 'unsure');
 
-  // ── Works best for / Not ideal for (by skin type) ────────────────────
+  // ── Works best for / Not ideal for ───────────────────────────────────
   const bySkinType: Record<string, ProductIntelligence[]> = {};
   for (const r of rows) {
-    if (r.skin_type) {
-      (bySkinType[r.skin_type] ??= []).push(r);
-    }
+    if (r.skin_type) (bySkinType[r.skin_type] ??= []).push(r);
   }
 
   const worksBestFor: MarketplaceProduct['works_best_for'] = [];
@@ -112,15 +121,13 @@ export async function recomputeMarketplaceProduct(
     .sort((a, b) => b.percentage - a.percentage)
     .slice(0, 8);
 
-  // ── Claude narrative generation ───────────────────────────────────────
+  // ── OpenRouter narrative generation ───────────────────────────────────
   let topInsights: string[] = [];
   let commonQuestions: Array<{ question: string; answer: string }> = [];
   let educationGaps: Array<{ mistake: string; percentage: number; tip: string }> = [];
 
   try {
-    const allQuestions = rows.flatMap(
-      (r) => (r.unanswered_questions_json ?? []) as string[]
-    );
+    const allQuestions = rows.flatMap((r) => (r.unanswered_questions_json ?? []) as string[]);
     const allMistakes = rows.flatMap((r) => (r.usage_mistakes ?? []) as string[]);
     const mistakeFreq = countBy(allMistakes, (m) => m);
 
@@ -150,25 +157,23 @@ Rules:
 - education_gaps: 2-4 common usage mistakes with percentage affected and a practical tip.
 Only return valid JSON, no other text.`;
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+    const response = await getOpenRouter().chat.completions.create({
+      model: MODEL,
       max_tokens: 1024,
+      response_format: { type: 'json_object' },
       messages: [{ role: 'user', content: prompt }],
     });
 
-    const content = message.content[0];
-    if (content.type === 'text') {
-      // Extract JSON from possible markdown code blocks
-      const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        topInsights = parsed.top_insights ?? [];
-        commonQuestions = parsed.common_questions ?? [];
-        educationGaps = parsed.education_gaps ?? [];
-      }
+    const text = response.choices[0].message.content ?? '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      topInsights = parsed.top_insights ?? [];
+      commonQuestions = parsed.common_questions ?? [];
+      educationGaps = parsed.education_gaps ?? [];
     }
   } catch (err) {
-    console.error('[aggregator] Claude narrative generation failed:', err);
+    console.error('[aggregator] OpenRouter narrative generation failed:', err);
     // Graceful degradation — numeric fields still upserted
   }
 
