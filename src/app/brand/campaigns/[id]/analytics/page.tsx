@@ -46,11 +46,6 @@ export default async function AnalyticsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{campaign?.campaign_name ?? "Campaign Analytics"}</h1>
-        <p className="text-sm text-slate-500 mt-1">{campaign?.product_name} · {campaign?.brand_name}</p>
-      </div>
-
       {/* Stat cards */}
       <div className="grid grid-cols-4 gap-3">
         <StatCard

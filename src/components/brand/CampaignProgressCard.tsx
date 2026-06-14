@@ -22,47 +22,34 @@ export default function CampaignProgressCard({ campaign }: CampaignProgressCardP
       : 0;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="font-medium text-sm truncate">{campaign.campaign_name}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{campaign.product_name} · {campaign.brand_name}</p>
+    <Link href={`/brand/campaigns/${campaign.id}/analytics`} className="block">
+      <Card className="hover:shadow-md hover:border-purple-200 transition-all cursor-pointer">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-medium text-sm truncate">{campaign.campaign_name}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{campaign.product_name} · {campaign.brand_name}</p>
+            </div>
+            <Badge variant={STATUS_COLORS[campaign.status] as "default" | "secondary" | "outline" | "destructive"}>
+              {campaign.status}
+            </Badge>
           </div>
-          <Badge variant={STATUS_COLORS[campaign.status] as "default" | "secondary" | "outline" | "destructive"}>
-            {campaign.status}
-          </Badge>
-        </div>
 
-        <div className="mt-3 space-y-1">
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>Calls completed</span>
-            <span>{campaign.completed_calls} / {campaign.total_contacts}</span>
+          <div className="mt-3 space-y-1">
+            <div className="flex justify-between text-xs text-slate-500">
+              <span>Calls completed</span>
+              <span>{campaign.completed_calls} / {campaign.total_contacts}</span>
+            </div>
+            <Progress value={progress} className="h-1.5" />
           </div>
-          <Progress value={progress} className="h-1.5" />
-        </div>
 
-        <div className="flex gap-2 mt-3">
-          <Link
-            href={`/brand/campaigns/${campaign.id}/analytics`}
-            className="text-xs text-purple-600 hover:underline"
-          >
-            Analytics →
-          </Link>
-          <Link
-            href={`/brand/campaigns/${campaign.id}/calls`}
-            className="text-xs text-slate-500 hover:underline"
-          >
-            Calls →
-          </Link>
-          <Link
-            href={`/brand/campaigns/${campaign.id}/actions`}
-            className="text-xs text-slate-500 hover:underline"
-          >
-            Actions →
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex gap-3 mt-3 text-xs text-slate-400">
+            <span className="text-purple-600 font-medium">Analysis</span>
+            <span>Calls</span>
+            <span>Actions</span>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
