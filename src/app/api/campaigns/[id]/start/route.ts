@@ -13,8 +13,8 @@ export async function POST(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
     }
 
-    const agentId = process.env.RINGG_AGENT_ID;
-    const fromNumberId = process.env.RINGG_FROM_NUMBER_ID;
+    const agentId = (process.env.RINGG_AGENT_ID ?? '').replace(/^﻿/, '').trim() || undefined;
+    const fromNumberId = (process.env.RINGG_FROM_NUMBER_ID ?? '').replace(/^﻿/, '').trim() || undefined;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
     const callbackUrl = `${appUrl}/api/webhooks/ringg`;
 

@@ -70,6 +70,7 @@ export class RinggClient {
     const csvBlob = new Blob([csvLines.join('\n')], { type: 'text/csv' });
     formData.append('file', csvBlob, `${params.name}.csv`);
     formData.append('name', params.name);
+    formData.append('variables_map', JSON.stringify({ mobile_number: 'mobile_number', name: 'name' }));
 
     return this.request('POST', '/campaign/save', formData);
   }
