@@ -1,0 +1,11 @@
+mobile_number,name,product_name,product_category,product_subcategory,purchase_date,order_id,city,skin_type,brand_name
+9876543210,Priya Sharma,Glow Serum Pro,skincare,brightening serum,2026-05-15,ORD-10021,Mumbai,oily,LumiSkin
+9845012345,Ananya Iyer,Glow Serum Pro,skincare,brightening serum,2026-05-18,ORD-10034,Bangalore,combination,LumiSkin
+9901234567,Deepika Nair,Glow Serum Pro,skincare,brightening serum,2026-05-20,ORD-10048,Chennai,dry,LumiSkin
+9812345678,Kavya Reddy,Glow Serum Pro,skincare,brightening serum,2026-05-22,ORD-10055,Hyderabad,normal,LumiSkin
+9867543210,Sneha Kulkarni,Glow Serum Pro,skincare,brightening serum,2026-05-25,ORD-10062,Pune,oily,LumiSkin
+9734512345,Meera Patel,HydraBoost Moisturizer,skincare,moisturizer,2026-05-28,ORD-10078,Ahmedabad,combination,AquaDerm
+9890123456,Ritu Verma,HydraBoost Moisturizer,skincare,moisturizer,2026-05-30,ORD-10091,Delhi,sensitive,AquaDerm
+9823456789,Pooja Singh,HydraBoost Moisturizer,skincare,moisturizer,2026-06-01,ORD-10103,Kolkata,dry,AquaDerm
+9756789012,Nisha Agarwal,ClearSkin Toner,skincare,toner,2026-06-03,ORD-10115,Jaipur,oily,PoreMinimize
+9678901234,Divya Menon,ClearSkin Toner,skincare,toner,2026-06-05,ORD-10128,Kochi,normal,PoreMinimize

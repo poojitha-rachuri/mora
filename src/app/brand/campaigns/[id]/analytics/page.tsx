@@ -1,43 +1,123 @@
-﻿'use client'
+import { getCampaignAnalyticsSummary, getCampaign } from "@/lib/db";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import SatisfactionChart from "@/components/brand/SatisfactionChart";
+import SentimentDistribution from "@/components/brand/SentimentDistribution";
+import RepurchaseGauge from "@/components/brand/RepurchaseGauge";
+import IssueHeatmap from "@/components/brand/IssueHeatmap";
+import SegmentBreakdown from "@/components/brand/SegmentBreakdown";
+import EducationGapReport from "@/components/brand/EducationGapReport";
 
-import { use, useEffect, useState } from 'react'
-import Link from 'next/link'
-import AnalyticsDashboard from './AnalyticsDashboard'
+export const dynamic = "force-dynamic";
 
-export default function AnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const [data, setData] = useState<{ campaign: Record<string, unknown>; calls: Record<string, unknown>[]; intelligence: Record<string, unknown>[] } | null>(null)
+function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <p className="text-xs text-slate-500 font-medium">{label}</p>
+        <p className="text-2xl font-bold mt-1">{value}</p>
+        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+      </CardContent>
+    </Card>
+  );
+}
 
-  useEffect(() => {
-    fetch(`/api/campaigns/${id}`)
-      .then(r => r.json())
-      .then(setData)
-  }, [id])
+export default async function AnalyticsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
-  if (!data) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-400">Loading…</div>
+  let analytics = null;
+  let campaign = null;
+
+  try {
+    [analytics, campaign] = await Promise.all([
+      getCampaignAnalyticsSummary(id),
+      getCampaign(id),
+    ]);
+  } catch {
+    return (
+      <div className="text-center py-16 text-slate-400">
+        <p>Unable to load analytics. Ensure Supabase is configured.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/brand/campaigns" className="text-xl font-bold text-rose-500">TrueGlow</Link>
-            <span className="text-gray-400">/</span>
-            <span className="text-gray-600 truncate max-w-xs">{data.campaign.name as string}</span>
-          </div>
-          <nav className="flex gap-2">
-            {(['analytics', 'calls', 'actions'] as const).map(tab => (
-              <Link key={tab} href={`/brand/campaigns/${id}/${tab}`}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${tab === 'analytics' ? 'bg-rose-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </header>
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <AnalyticsDashboard campaign={data.campaign} calls={data.calls} intelligence={data.intelligence} />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">{campaign?.campaign_name ?? "Campaign Analytics"}</h1>
+        <p className="text-sm text-slate-500 mt-1">{campaign?.product_name} · {campaign?.brand_name}</p>
       </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-4 gap-3">
+        <StatCard
+          label="Completion Rate"
+          value={`${Math.round(analytics.completion_rate * 100)}%`}
+          sub={`${analytics.completed_calls}/${analytics.total_calls} calls`}
+        />
+        <StatCard
+          label="Avg Call Duration"
+          value={`${Math.floor(analytics.avg_call_duration / 60)}:${(analytics.avg_call_duration % 60).toString().padStart(2, "0")}`}
+          sub="minutes:seconds"
+        />
+        <StatCard
+          label="NPS Score"
+          value={analytics.nps.toString()}
+          sub="out of 100"
+        />
+        <StatCard
+          label="Issue Detection"
+          value={`${Math.round(analytics.issue_detection_rate * 100)}%`}
+          sub="calls with issues"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Satisfaction by Dimension</CardTitle></CardHeader>
+          <CardContent>
+            <SatisfactionChart data={analytics.avg_satisfaction} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Sentiment Distribution</CardTitle></CardHeader>
+          <CardContent>
+            <SentimentDistribution data={analytics.sentiment_distribution} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Repurchase Intent</CardTitle></CardHeader>
+        <CardContent>
+          <RepurchaseGauge data={analytics.repurchase_distribution} />
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 gap-6">
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Top Issues</CardTitle></CardHeader>
+          <CardContent>
+            <IssueHeatmap issues={analytics.top_issues} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Customer Segments</CardTitle></CardHeader>
+          <CardContent>
+            <SegmentBreakdown data={analytics.customer_segments} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Education Gaps</CardTitle></CardHeader>
+        <CardContent>
+          <EducationGapReport gaps={analytics.education_gaps} />
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }
