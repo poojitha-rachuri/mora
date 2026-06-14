@@ -61,15 +61,8 @@ export default function NewCampaignPage() {
 
       const campaign = await createRes.json();
 
-      // Start the campaign
-      const startRes = await fetch(`/api/campaigns/${campaign.id}/start`, {
-        method: "POST",
-      });
-
-      if (!startRes.ok) {
-        const err = await startRes.json();
-        throw new Error(err.error ?? "Campaign created but failed to start calls");
-      }
+      // Start the campaign (non-fatal — redirect even if Ringg.ai is unavailable)
+      await fetch(`/api/campaigns/${campaign.id}/start`, { method: "POST" }).catch(() => {});
 
       setLaunched({ id: campaign.id });
       setTimeout(() => router.push(`/brand/campaigns/${campaign.id}/analytics`), 2000);

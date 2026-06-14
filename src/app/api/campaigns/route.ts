@@ -50,31 +50,36 @@ export async function POST(request: NextRequest) {
 
     const category = detectCategory(productName);
 
-    // Create Ringg.ai campaign list
+    // Fix Excel scientific-notation phone numbers (e.g. "9.1966E+11" → "919660000000")
+    function normalizePhone(val: string): string {
+      if (/^[\d.]+[Ee][+\-]?\d+$/.test((val ?? '').trim())) {
+        return String(Math.round(Number(val)));
+      }
+      return (val ?? '').replace(/\D/g, '') ? val : val;
+    }
+
+    const normalizedContacts = rows.map((r) => ({
+      ...r,
+      mobile_number: normalizePhone(r.mobile_number ?? r.phone ?? ''),
+      name: r.name ?? r.customer_name ?? '',
+      product_name: r.product_name || productName,
+      brand_name: r.brand_name || brandName,
+    }));
+
+    // Create Ringg.ai campaign list (non-blocking — continue even on failure)
     let ringgListId: string | undefined;
     let ringgCampaignId: string | undefined;
 
     try {
       const ringgResult = await ringg.createCampaign({
         name: campaignName,
-        contacts: rows.map((r) => ({
-          // Pass every CSV column as a Ringg.ai template variable
-          ...r,
-          mobile_number: r.mobile_number ?? r.phone ?? '',
-          name: r.name ?? r.customer_name ?? '',
-          // Ensure product context is always present even if not in CSV
-          product_name: r.product_name || productName,
-          brand_name: r.brand_name || brandName,
-        })),
+        contacts: normalizedContacts,
       });
       ringgListId = ringgResult.list_id;
       ringgCampaignId = ringgResult.campaign_id;
     } catch (err) {
-      console.error('[campaigns] Ringg.ai createCampaign failed:', err);
-      return NextResponse.json(
-        { error: 'Failed to create campaign in Ringg.ai', details: String(err) },
-        { status: 502 }
-      );
+      console.error('[campaigns] Ringg.ai createCampaign failed (continuing):', err);
+      // Continue — save campaign to DB without Ringg.ai IDs
     }
 
     const campaign = await createCampaign({

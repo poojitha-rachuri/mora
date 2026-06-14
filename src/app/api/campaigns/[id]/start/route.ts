@@ -13,49 +13,31 @@ export async function POST(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
     }
 
-    if (!campaign.ringg_list_id) {
-      return NextResponse.json(
-        { error: 'Campaign has no Ringg.ai list ID — create the campaign first' },
-        { status: 400 }
-      );
-    }
-
     const agentId = process.env.RINGG_AGENT_ID;
     const fromNumberId = process.env.RINGG_FROM_NUMBER_ID;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
     const callbackUrl = `${appUrl}/api/webhooks/ringg`;
 
-    if (!agentId || !fromNumberId) {
-      return NextResponse.json(
-        { error: 'RINGG_AGENT_ID and RINGG_FROM_NUMBER_ID env vars required' },
-        { status: 503 }
-      );
-    }
+    // Attempt Ringg.ai campaign start — non-fatal if missing IDs or API fails
+    if (campaign.ringg_list_id && agentId && fromNumberId) {
+      try {
+        await ringg.startCampaign({
+          agentId,
+          listId: campaign.ringg_list_id,
+          fromNumberId,
+          callbackUrl,
+        });
+      } catch (err) {
+        console.error('[campaigns/start] Ringg.ai startCampaign failed (continuing):', err);
+      }
 
-    // Start the campaign
-    try {
-      await ringg.startCampaign({
-        agentId,
-        listId: campaign.ringg_list_id,
-        fromNumberId,
-        callbackUrl,
-      });
-    } catch (err) {
-      console.error('[campaigns/start] Ringg.ai startCampaign failed:', err);
-      return NextResponse.json(
-        { error: 'Failed to start campaign in Ringg.ai', details: String(err) },
-        { status: 502 }
-      );
-    }
-
-    // Register webhooks
-    try {
-      await ringg.setupWebhooks({
-        agentId,
-        callbackUrl,
-      });
-    } catch (err) {
-      console.warn('[campaigns/start] Webhook setup failed (non-fatal):', err);
+      try {
+        await ringg.setupWebhooks({ agentId, callbackUrl });
+      } catch (err) {
+        console.warn('[campaigns/start] Webhook setup failed (non-fatal):', err);
+      }
+    } else {
+      console.warn('[campaigns/start] Skipping Ringg.ai — missing list_id, RINGG_AGENT_ID, or RINGG_FROM_NUMBER_ID');
     }
 
     const updated = await updateCampaign(id, {

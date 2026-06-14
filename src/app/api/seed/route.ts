@@ -181,8 +181,20 @@ const WASH_NAMES = [
   'Mohan Verma', 'Arun Khan', 'Sanjay Joshi', 'Dinesh Mehta', 'Balaji Agarwal',
 ];
 
+export const maxDuration = 60;
+
 export async function POST() {
   const db = createServerClient();
+  try {
+    return await runSeed(db);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[seed] Fatal error:', msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+async function runSeed(db: ReturnType<typeof createServerClient>) {
 
   // ── 1. Delete existing seed data ──────────────────────────────────────
   const products = [SERUM_PRODUCT, WASH_PRODUCT];
@@ -352,9 +364,13 @@ export async function POST() {
     if (!piErr) piInserted++;
   }
 
-  // ── 4. Recompute marketplace aggregates ───────────────────────────────
-  await recomputeMarketplaceProduct(SERUM_PRODUCT.product_name, SERUM_PRODUCT.brand_name);
-  await recomputeMarketplaceProduct(WASH_PRODUCT.product_name, WASH_PRODUCT.brand_name);
+  // ── 4. Recompute marketplace aggregates (fire-and-forget to avoid timeout) ─
+  recomputeMarketplaceProduct(SERUM_PRODUCT.product_name, SERUM_PRODUCT.brand_name).catch((e) =>
+    console.error('[seed] serum recompute failed:', e)
+  );
+  recomputeMarketplaceProduct(WASH_PRODUCT.product_name, WASH_PRODUCT.brand_name).catch((e) =>
+    console.error('[seed] wash recompute failed:', e)
+  );
 
   return NextResponse.json({
     success: true,
