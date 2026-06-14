@@ -53,7 +53,6 @@ export async function POST(
       await ringg.setupWebhooks({
         agentId,
         callbackUrl,
-        secret: process.env.RINGG_WEBHOOK_SECRET,
       });
     } catch (err) {
       console.warn('[campaigns/start] Webhook setup failed (non-fatal):', err);
