@@ -55,8 +55,8 @@ export default async function ProductPage({
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       {/* Back */}
-      <Link href="/marketplace/recommendations" className="text-sm text-slate-500 hover:text-slate-700">
-        ← Back to Recommendations
+      <Link href="/marketplace/products" className="text-sm text-slate-500 hover:text-slate-700">
+        ← Back to Products
       </Link>
 
       {/* Header */}
