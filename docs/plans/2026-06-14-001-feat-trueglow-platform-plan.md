@@ -1,7 +1,7 @@
 ---
 title: "feat: Build TrueGlow voice-verified beauty feedback platform"
 type: feat
-status: active
+status: completed
 date: 2026-06-14
 origin: docs/brainstorms/2026-06-14-trueglow-requirements.md
 ---
