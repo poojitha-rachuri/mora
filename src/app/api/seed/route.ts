@@ -506,7 +506,7 @@ async function runSeed(db: ReturnType<typeof createServerClient>) {
       top_insights: [
         '86% noticed easier detangling from first wash',
         'Frizz control lasts through humid days per 79% of users',
-        'Apply mid-length to ends only — roots don't need conditioner',
+        "Apply mid-length to ends only — roots don't need conditioner",
       ],
       common_questions: [
         { question: 'Should I apply it to roots?', answer: 'No — 88% of users with best results apply only mid-length to ends.' },
