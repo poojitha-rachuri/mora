@@ -264,30 +264,32 @@ async function runSeed(db: ReturnType<typeof createServerClient>) {
   let callRecordsInserted = 0;
   let piInserted = 0;
 
-  // Insert serum records
-  for (let i = 0; i < serumRecords.length; i++) {
+  // ── Serum: batch insert all call records at once (1 DB call instead of 40) ─
+  const serumCallRows = serumRecords.map((analysis, i) => ({
+    campaign_id: serumCampaign.id,
+    ringg_call_id: `seed_serum_${i + 1}`,
+    callee_name: SERUM_NAMES[i],
+    phone_hash: makePhone(i + 1),
+    status: 'completed',
+    call_duration: 120 + Math.floor((i * 47) % 160),
+    recording_url: null,
+    transcript_json: SERUM_TRANSCRIPTS[i % SERUM_TRANSCRIPTS.length],
+    custom_analysis: analysis,
+  }));
+
+  const { data: insertedSerumCalls, error: serumCallErr } = await db
+    .from('call_records')
+    .insert(serumCallRows)
+    .select('id');
+
+  if (serumCallErr) throw new Error(`Serum call_records batch insert failed: ${serumCallErr.message}`);
+  callRecordsInserted += insertedSerumCalls?.length ?? 0;
+
+  const serumPIRows = (insertedSerumCalls ?? []).map((call, i) => {
     const analysis = serumRecords[i];
-    const transcript = SERUM_TRANSCRIPTS[i % SERUM_TRANSCRIPTS.length];
-    const duration = 120 + Math.floor((i * 47) % 160);
-
-    const { data: callRecord, error: crErr } = await db.from('call_records').insert({
+    return {
       campaign_id: serumCampaign.id,
-      ringg_call_id: `seed_serum_${i + 1}`,
-      callee_name: SERUM_NAMES[i],
-      phone_hash: makePhone(i + 1),
-      status: 'completed',
-      call_duration: duration,
-      recording_url: null,
-      transcript_json: transcript,
-      custom_analysis: analysis,
-    }).select().single();
-
-    if (crErr) { console.error(`Serum call ${i} failed:`, crErr.message); continue; }
-    callRecordsInserted++;
-
-    const { error: piErr } = await db.from('product_intelligence').insert({
-      campaign_id: serumCampaign.id,
-      call_record_id: callRecord.id,
+      call_record_id: call.id,
       product_name: SERUM_PRODUCT.product_name,
       brand_name: SERUM_PRODUCT.brand_name,
       skin_type: analysis.skin_type,
@@ -307,40 +309,47 @@ async function runSeed(db: ReturnType<typeof createServerClient>) {
       adverse_reaction_flag: analysis.adverse_reaction_flag,
       non_usage_reason: (analysis as { non_usage_reason?: string }).non_usage_reason ?? null,
       enriched_context: null,
-    });
-    if (!piErr) piInserted++;
-  }
+    };
+  });
 
-  // Insert wash records
-  for (let i = 0; i < washRecords.length; i++) {
+  const { error: serumPIErr } = await db.from('product_intelligence').insert(serumPIRows);
+  if (!serumPIErr) piInserted += serumPIRows.length;
+
+  // ── Wash: batch insert all call records at once (1 DB call instead of 40) ──
+  const washTranscript = (i: number) => [
+    { role: 'bot', content: 'Hi, I am Ava from Plum. How has your experience been with the Green Tea Anti-Acne Face Wash?' },
+    { role: 'user', content: i < 20 ? 'Really great! My acne has reduced significantly and the fragrance is amazing.' : 'It is okay, I have some concerns about it.' },
+    { role: 'bot', content: 'Can you tell me more about the lather and how your skin feels after washing?' },
+    { role: 'user', content: i < 20 ? 'Great lather and my skin feels really clean and fresh. Not drying at all.' : 'The fragrance is a bit too strong and my skin feels a little tight.' },
+    { role: 'bot', content: 'Would you repurchase this product?' },
+    { role: 'user', content: i < 20 ? 'Absolutely yes, I have already ordered my second bottle!' : 'I am not sure yet, I want to see how it goes.' },
+  ];
+
+  const washCallRows = washRecords.map((analysis, i) => ({
+    campaign_id: washCampaign.id,
+    ringg_call_id: `seed_wash_${i + 1}`,
+    callee_name: WASH_NAMES[i],
+    phone_hash: makePhone(i + 101),
+    status: 'completed',
+    call_duration: 130 + Math.floor((i * 53) % 150),
+    recording_url: null,
+    transcript_json: washTranscript(i),
+    custom_analysis: analysis,
+  }));
+
+  const { data: insertedWashCalls, error: washCallErr } = await db
+    .from('call_records')
+    .insert(washCallRows)
+    .select('id');
+
+  if (washCallErr) throw new Error(`Wash call_records batch insert failed: ${washCallErr.message}`);
+  callRecordsInserted += insertedWashCalls?.length ?? 0;
+
+  const washPIRows = (insertedWashCalls ?? []).map((call, i) => {
     const analysis = washRecords[i];
-    const duration = 130 + Math.floor((i * 53) % 150);
-
-    const { data: callRecord, error: crErr } = await db.from('call_records').insert({
+    return {
       campaign_id: washCampaign.id,
-      ringg_call_id: `seed_wash_${i + 1}`,
-      callee_name: WASH_NAMES[i],
-      phone_hash: makePhone(i + 101),
-      status: 'completed',
-      call_duration: duration,
-      recording_url: null,
-      transcript_json: [
-        { role: 'bot', content: 'Hi, I am Ava from Plum. How has your experience been with the Green Tea Anti-Acne Face Wash?' },
-        { role: 'user', content: i < 20 ? 'Really great! My acne has reduced significantly and the fragrance is amazing.' : 'It is okay, I have some concerns about it.' },
-        { role: 'bot', content: 'Can you tell me more about the lather and how your skin feels after washing?' },
-        { role: 'user', content: i < 20 ? 'Great lather and my skin feels really clean and fresh. Not drying at all.' : 'The fragrance is a bit too strong and my skin feels a little tight.' },
-        { role: 'bot', content: 'Would you repurchase this product?' },
-        { role: 'user', content: i < 20 ? 'Absolutely yes, I have already ordered my second bottle!' : 'I am not sure yet, I want to see how it goes.' },
-      ],
-      custom_analysis: analysis,
-    }).select().single();
-
-    if (crErr) { console.error(`Wash call ${i} failed:`, crErr.message); continue; }
-    callRecordsInserted++;
-
-    const { error: piErr } = await db.from('product_intelligence').insert({
-      campaign_id: washCampaign.id,
-      call_record_id: callRecord.id,
+      call_record_id: call.id,
       product_name: WASH_PRODUCT.product_name,
       brand_name: WASH_PRODUCT.brand_name,
       skin_type: analysis.skin_type,
@@ -360,9 +369,11 @@ async function runSeed(db: ReturnType<typeof createServerClient>) {
       adverse_reaction_flag: analysis.adverse_reaction_flag,
       non_usage_reason: null,
       enriched_context: null,
-    });
-    if (!piErr) piInserted++;
-  }
+    };
+  });
+
+  const { error: washPIErr } = await db.from('product_intelligence').insert(washPIRows);
+  if (!washPIErr) piInserted += washPIRows.length;
 
   // ── 4. Recompute marketplace aggregates (fire-and-forget to avoid timeout) ─
   recomputeMarketplaceProduct(SERUM_PRODUCT.product_name, SERUM_PRODUCT.brand_name).catch((e) =>
