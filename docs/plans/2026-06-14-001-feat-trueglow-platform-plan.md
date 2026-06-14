@@ -1,24 +1,24 @@
 ---
-title: "feat: Build TrueGlow voice-verified beauty feedback platform"
+title: "feat: Build MORA voice-verified beauty feedback platform"
 type: feat
 status: completed
 date: 2026-06-14
-origin: docs/brainstorms/2026-06-14-trueglow-requirements.md
+origin: docs/brainstorms/2026-06-14-mora-requirements.md
 ---
 
-# feat: Build TrueGlow voice-verified beauty feedback platform
+# feat: Build MORA voice-verified beauty feedback platform
 
 ---
 
 ## Summary
 
-Build TrueGlow — a full-stack Next.js 14 application on Supabase PostgreSQL that lets beauty brands run Ringg.ai outbound voice feedback campaigns on recent buyers, then surfaces structured, anonymized insights on a consumer-facing product marketplace. Claude powers three intelligence layers: transcript enrichment, marketplace narrative generation, and recommendation reasoning. Scope is six P0 pages plus the full webhook data pipeline and seed data for two products.
+Build MORA — a full-stack Next.js 14 application on Supabase PostgreSQL that lets beauty brands run Ringg.ai outbound voice feedback campaigns on recent buyers, then surfaces structured, anonymized insights on a consumer-facing product marketplace. Claude powers three intelligence layers: transcript enrichment, marketplace narrative generation, and recommendation reasoning. Scope is six P0 pages plus the full webhook data pipeline and seed data for two products.
 
 ---
 
 ## Problem Frame
 
-Beauty brands have no scalable, verified mechanism for structured post-purchase feedback. Star ratings are shallow; written reviews are sparse and incentive-distorted. Consumers buying beauty products face the inverse problem: product pages show aggregate stars but not "does this serum work for my oily skin, in Bengaluru humidity, layered with retinol?" TrueGlow fills both gaps with AI-conducted voice calls that collect expert-probed, beauty-specific product experience data and surface it as trust-scored product intelligence.
+Beauty brands have no scalable, verified mechanism for structured post-purchase feedback. Star ratings are shallow; written reviews are sparse and incentive-distorted. Consumers buying beauty products face the inverse problem: product pages show aggregate stars but not "does this serum work for my oily skin, in Bengaluru humidity, layered with retinol?" MORA fills both gaps with AI-conducted voice calls that collect expert-probed, beauty-specific product experience data and surface it as trust-scored product intelligence.
 
 The build is a hackathon demo targeting four scoring parameters: end-to-end voice job completion (30pts), beauty domain nuance (30pts), credible business impact metrics (20pts), and context-preserving multi-turn conversations (20pts).
 
@@ -145,7 +145,7 @@ graph LR
 ## Output Structure
 
 ```
-trueglow/
+mora/
 ├── app/
 │   ├── layout.tsx
 │   ├── page.tsx                           # redirect → /brand/campaigns
@@ -242,7 +242,7 @@ trueglow/
 - `app/marketplace/layout.tsx`
 - `components/shared/Navigation.tsx`
 
-**Approach**: Bootstrap with `npx create-next-app@latest trueglow --typescript --tailwind --app --src-dir=no --import-alias="@/*"`. Install runtime deps: `@supabase/supabase-js @supabase/ssr @anthropic-ai/sdk recharts papaparse`. Install shadcn/ui and add components: Card, Table, Badge, Button, Input, Progress, Tabs, Dialog, Select, Accordion. Brand layout uses a left sidebar with links to campaign list, new campaign, and settings stub. Marketplace layout uses a top bar with the TrueGlow logo and a "For Brands" link. Navigation component is the shared top-bar rendered in root layout with a brand/marketplace surface toggle. Root page redirects to `/brand/campaigns`. `.env.local.example` lists all nine required env vars with placeholder values.
+**Approach**: Bootstrap with `npx create-next-app@latest mora --typescript --tailwind --app --src-dir=no --import-alias="@/*"`. Install runtime deps: `@supabase/supabase-js @supabase/ssr @anthropic-ai/sdk recharts papaparse`. Install shadcn/ui and add components: Card, Table, Badge, Button, Input, Progress, Tabs, Dialog, Select, Accordion. Brand layout uses a left sidebar with links to campaign list, new campaign, and settings stub. Marketplace layout uses a top bar with the MORA logo and a "For Brands" link. Navigation component is the shared top-bar rendered in root layout with a brand/marketplace surface toggle. Root page redirects to `/brand/campaigns`. `.env.local.example` lists all nine required env vars with placeholder values.
 
 **Test expectation**: none — scaffolding.
 
@@ -577,7 +577,7 @@ POST /api/webhooks/ringg
 - `app/api/seed/route.ts`
 - `components/shared/Navigation.tsx` (finalized here)
 
-**Approach**: `scripts/seed.ts` contains hardcoded data for exactly 40 call records per product. **Minimalist 10% Niacinamide Serum** records: 18 records with oily/combination skin and high satisfaction (overall_sentiment: positive, repurchase_intent: definitely_yes or probably_yes, texture/effectiveness scores 4-5), 8 with dry skin and moderate satisfaction (effectiveness 3-4, dryness complaint), 8 confused beginners (usage_mistakes: ["not_using_moisturizer_after"], lower scores), 4 adverse reaction reports (adverse_reaction_flag: true, tingling → stopped use, recommended_action: escalate_to_support), 2 gift buyers (non_usage_reason: bought_as_gift). **Plum Green Tea Anti-Acne Face Wash** records: 20 acne-prone high satisfaction (cleanser effectiveness high, repurchase strong), 10 sensitive skin with dryness complaints (fragrance_too_strong, skin_feels_tight), 6 hard water non-response (usage_mistakes: ["hard_water_not_accounted_for"]), 4 washing-too-frequently issues. Each record includes: realistic `callee_name`, `phone_hash` (SHA-256 of "+91XXXXXXXXXX"), `status: "completed"`, `call_duration` between 120-280 seconds, `transcript_json` array of 6-10 turns (realistic bot/user conversation per the spec's Ava persona — include 2-3 Hindi records). Each record also has a pre-filled `custom_analysis` JSON matching the spec's extraction schema. After inserting all 80 records, calls `recomputeMarketplaceProduct` for both products. `POST /api/seed` runs the same logic — deletes existing data for these two products first (by product_name+brand_name), then re-inserts. Returns counts of inserted rows. Navigation component renders TrueGlow logo (text-based), "Brand Dashboard" and "Marketplace" toggle buttons that highlight the current surface, and a subtle demo-mode badge.
+**Approach**: `scripts/seed.ts` contains hardcoded data for exactly 40 call records per product. **Minimalist 10% Niacinamide Serum** records: 18 records with oily/combination skin and high satisfaction (overall_sentiment: positive, repurchase_intent: definitely_yes or probably_yes, texture/effectiveness scores 4-5), 8 with dry skin and moderate satisfaction (effectiveness 3-4, dryness complaint), 8 confused beginners (usage_mistakes: ["not_using_moisturizer_after"], lower scores), 4 adverse reaction reports (adverse_reaction_flag: true, tingling → stopped use, recommended_action: escalate_to_support), 2 gift buyers (non_usage_reason: bought_as_gift). **Plum Green Tea Anti-Acne Face Wash** records: 20 acne-prone high satisfaction (cleanser effectiveness high, repurchase strong), 10 sensitive skin with dryness complaints (fragrance_too_strong, skin_feels_tight), 6 hard water non-response (usage_mistakes: ["hard_water_not_accounted_for"]), 4 washing-too-frequently issues. Each record includes: realistic `callee_name`, `phone_hash` (SHA-256 of "+91XXXXXXXXXX"), `status: "completed"`, `call_duration` between 120-280 seconds, `transcript_json` array of 6-10 turns (realistic bot/user conversation per the spec's Ava persona — include 2-3 Hindi records). Each record also has a pre-filled `custom_analysis` JSON matching the spec's extraction schema. After inserting all 80 records, calls `recomputeMarketplaceProduct` for both products. `POST /api/seed` runs the same logic — deletes existing data for these two products first (by product_name+brand_name), then re-inserts. Returns counts of inserted rows. Navigation component renders MORA logo (text-based), "Brand Dashboard" and "Marketplace" toggle buttons that highlight the current surface, and a subtle demo-mode badge.
 
 **Test scenarios**:
 - Happy path: `POST /api/seed` on an empty DB → response body shows `{campaigns: 2, callRecords: 80, productIntelligence: 80, marketplaceProducts: 2}`.
@@ -592,7 +592,7 @@ POST /api/webhooks/ringg
 
 ## Risks and Dependencies
 
-**RISK-1: Public webhook URL required.** Ringg.ai webhooks need a public HTTPS URL. During local development use ngrok (`ngrok http 3000`). For the demo, deploy to Vercel first and use `NEXT_PUBLIC_APP_URL=https://trueglow.vercel.app`. Plan the webhook URL into demo setup: seed data works without it; live pipeline demo requires it.
+**RISK-1: Public webhook URL required.** Ringg.ai webhooks need a public HTTPS URL. During local development use ngrok (`ngrok http 3000`). For the demo, deploy to Vercel first and use `NEXT_PUBLIC_APP_URL=https://mora.vercel.app`. Plan the webhook URL into demo setup: seed data works without it; live pipeline demo requires it.
 
 **RISK-2: Ringg.ai credentials must be pre-configured.** `RINGG_API_KEY`, `RINGG_AGENT_ID`, and `RINGG_FROM_NUMBER_ID` must be available before launching a live campaign. The Ringg.ai beauty assistant must be configured in the Ringg.ai dashboard with the prompt from the spec's Document 2 before the demo. Verify with a test call to a known phone number.
 

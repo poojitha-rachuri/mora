@@ -6,7 +6,7 @@ import Navigation from "@/components/shared/Navigation";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TrueGlow — Voice-Verified Beauty Intelligence",
+  title: "MORA — Voice-Verified Beauty Intelligence",
   description: "AI voice feedback platform for beauty brands",
 };
 

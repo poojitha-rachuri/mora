@@ -16,7 +16,7 @@ export default function BuyButton({ productName }: { productName: string }) {
         Shop on Nykaa →
       </Button>
       <p className="text-xs text-center text-slate-400 mt-2">
-        TrueGlow does not sell products — we just surface verified buyer voices
+        MORA does not sell products — we just surface verified buyer voices
       </p>
     </div>
   );

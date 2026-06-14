@@ -1,4 +1,4 @@
--- TrueGlow Seed Data (schema v2)
+-- MORA Seed Data (schema v2)
 
 insert into marketplace_products (
   product_name, brand_name, category,

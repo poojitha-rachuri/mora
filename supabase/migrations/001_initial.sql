@@ -1,4 +1,4 @@
--- TrueGlow Database Schema
+-- MORA Database Schema
 
 -- Campaigns table
 create table if not exists campaigns (

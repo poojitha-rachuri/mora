@@ -114,7 +114,7 @@ export default function AgentPage() {
       <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/brand/campaigns" className="text-xl font-bold text-rose-500">TrueGlow</Link>
+            <Link href="/brand/campaigns" className="text-xl font-bold text-rose-500">MORA</Link>
             <span className="text-gray-400">/</span>
             <div className="flex items-center gap-2">
               <Mic size={16} className="text-rose-500" />

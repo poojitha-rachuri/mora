@@ -1,4 +1,4 @@
-# TrueGlow: Voice-Verified Post-Purchase Feedback — Requirements
+# MORA: Voice-Verified Post-Purchase Feedback — Requirements
 
 Created: 2026-06-14
 
@@ -6,7 +6,7 @@ Created: 2026-06-14
 
 ## Summary
 
-TrueGlow is a full-stack web application that enables beauty and personal care brands to run AI voice feedback campaigns on recent buyers via Ringg.ai, then surfaces anonymized, aggregated insights on a consumer-facing product marketplace. The system has two independent surfaces: a B2B Brand Dashboard for campaign management and analytics, and a B2C Consumer Marketplace for voice-verified product intelligence.
+MORA is a full-stack web application that enables beauty and personal care brands to run AI voice feedback campaigns on recent buyers via Ringg.ai, then surfaces anonymized, aggregated insights on a consumer-facing product marketplace. The system has two independent surfaces: a B2B Brand Dashboard for campaign management and analytics, and a B2C Consumer Marketplace for voice-verified product intelligence.
 
 ---
 

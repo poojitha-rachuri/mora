@@ -57,7 +57,7 @@ export async function getRecommendations(
       messages: [
         {
           role: 'user',
-          content: `You are TrueGlow's recommendation engine. A beauty shopper has shared their profile, and you have voice-verified product data from real buyers.
+          content: `You are MORA's recommendation engine. A beauty shopper has shared their profile, and you have voice-verified product data from real buyers.
 
 CONSUMER PROFILE:
 ${profileSummary}

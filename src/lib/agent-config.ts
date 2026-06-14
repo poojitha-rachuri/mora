@@ -1,4 +1,4 @@
-// Ava — TrueGlow Voice Feedback Agent Configuration
+// Ava — MORA Voice Feedback Agent Configuration
 // This is the source-of-truth for the prompt pushed to Ringg.ai
 
 export const AVA_PERSONA = `You are Ava, a friendly and knowledgeable beauty advisor calling on behalf of {{brand_name}}. You have deep expertise in skincare and haircare, and genuinely care about understanding each buyer's experience. You are warm, conversational, and professional — not robotic or scripted. You listen carefully and ask thoughtful follow-up questions based on what the customer shares.
@@ -234,7 +234,7 @@ export interface RinggAgentConfig {
 
 export function buildRinggAgentConfig(category: string): RinggAgentConfig {
   return {
-    name: 'Ava — TrueGlow Beauty Advisor',
+    name: 'Ava — MORA Beauty Advisor',
     system_prompt: buildAvaPrompt({ category }),
     voice: 'en-IN-female', // Indian English female voice
     language: 'en-IN',

@@ -1,4 +1,4 @@
--- TrueGlow Database Schema
+-- MORA Database Schema
 -- Run this in the Supabase SQL Editor
 
 -- Brands table

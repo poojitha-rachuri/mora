@@ -163,7 +163,7 @@ export default async function ProductPage({
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Issue Transparency</CardTitle>
-          <p className="text-xs text-slate-400">TrueGlow surfaces all buyer concerns — good and bad</p>
+          <p className="text-xs text-slate-400">MORA surfaces all buyer concerns — good and bad</p>
         </CardHeader>
         <CardContent>
           <IssueTransparency issues={product.issue_summary ?? []} />

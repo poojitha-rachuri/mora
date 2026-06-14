@@ -12,7 +12,7 @@ export default function Navigation() {
     <header className="border-b bg-white px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-rose-500 bg-clip-text text-transparent">
-          TrueGlow
+          MORA
         </span>
         <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
           Demo
