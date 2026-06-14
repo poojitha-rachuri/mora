@@ -79,7 +79,10 @@ export class RinggClient {
     const fromNumberId = cleanEnv(process.env.RINGG_FROM_NUMBER_ID);
     formData.append('call_config', JSON.stringify({ from_number_id: fromNumberId }));
     formData.append('country_code', countryCode);
-    formData.append('campaign_start_time', new Date().toISOString());
+    const now = new Date();
+    formData.append('campaign_start_time', now.toISOString());
+    const endTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    formData.append('campaign_end_time', endTime.toISOString());
 
     return this.request('POST', '/campaign/save', formData);
   }
