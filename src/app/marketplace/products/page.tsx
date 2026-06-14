@@ -3,6 +3,26 @@ import type { MarketplaceProduct } from "@/lib/types";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
+// Brand website and product image mapping
+const BRAND_META: Record<string, { siteUrl: string; image?: string }> = {
+  Minimalist: {
+    siteUrl: "https://beminimalist.co/",
+    image: "https://beminimalist.co/cdn/shop/products/10-Niacinamide-Serum_3.jpg",
+  },
+  Plum: {
+    siteUrl: "https://plumgoodness.com/",
+    image: "https://plumgoodness.com/cdn/shop/products/plum-green-tea-pore-cleansing-face-wash_540x.jpg",
+  },
+  Foxtale: { siteUrl: "https://foxtale.in/" },
+};
+
+function brandSiteUrl(brandName: string): string {
+  return BRAND_META[brandName]?.siteUrl ?? "#";
+}
+function productImage(brandName: string): string | undefined {
+  return BRAND_META[brandName]?.image;
+}
+
 export const dynamic = "force-dynamic";
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; gradient: string }> = {
@@ -77,25 +97,48 @@ export default async function ProductsPage() {
             const sentTotal = Math.max(p.total_verified_conversations, 1);
             const positivePct = Math.round((p.sentiment_distribution.positive / sentTotal) * 100);
 
+            const img = productImage(p.brand_name);
+            const siteUrl = brandSiteUrl(p.brand_name);
+
             return (
-              <Link
+              <a
                 key={p.id}
-                href={`/marketplace/products/${p.id}`}
+                href={siteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
               >
-                {/* Product image area */}
-                <div className={`h-36 bg-gradient-to-br ${style.gradient} relative flex items-end p-4`}>
-                  <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_white,_transparent)]" />
-                  <div>
-                    <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{p.brand_name}</p>
-                    <h2 className="text-white font-bold text-lg leading-tight">{p.product_name}</h2>
+                {/* Product image */}
+                <div className={`h-48 relative flex items-end overflow-hidden ${img ? "bg-white" : `bg-gradient-to-br ${style.gradient}`}`}>
+                  {img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={img}
+                      alt={p.product_name}
+                      className="w-full h-full object-contain p-4"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_white,_transparent)]" />
+                      <div className="p-4">
+                        <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{p.brand_name}</p>
+                        <h2 className="text-white font-bold text-lg leading-tight">{p.product_name}</h2>
+                      </div>
+                    </>
+                  )}
+                  <div className="absolute top-3 right-3">
+                    <TrustBadge score={p.voice_trust_score} />
                   </div>
-                  <TrustBadge score={p.voice_trust_score} />
                 </div>
 
                 {/* Card body */}
-                <div className="flex flex-col gap-3 p-4 flex-1">
-                  {/* Category */}
+                <div className="flex flex-col gap-2 p-4 flex-1">
+                  <div>
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{p.brand_name}</p>
+                    <h3 className="font-semibold text-slate-900 text-sm leading-snug">{p.product_name}</h3>
+                  </div>
+
                   <Badge variant="outline" className={`w-fit text-xs capitalize ${style.bg} ${style.text} border-0`}>
                     {(p.category ?? "beauty").replace(/_/g, " ")}
                   </Badge>
@@ -105,28 +148,21 @@ export default async function ProductsPage() {
                     <SentimentBar dist={p.sentiment_distribution} total={p.total_verified_conversations} />
                     <div className="flex justify-between text-xs text-slate-400">
                       <span>{positivePct}% positive</span>
-                      <span>{p.total_verified_conversations} verified voice{p.total_verified_conversations !== 1 ? "s" : ""}</span>
+                      <span>{p.total_verified_conversations} verified</span>
                     </div>
                   </div>
-
-                  {/* Top insight */}
-                  {p.top_insights?.[0] && (
-                    <p className="text-xs text-slate-500 italic line-clamp-2">
-                      &ldquo;{p.top_insights[0]}&rdquo;
-                    </p>
-                  )}
 
                   {/* CTA */}
                   <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between">
                     <span className="text-xs text-slate-400">
-                      Avg effectiveness: {p.avg_effectiveness?.toFixed(1) ?? "—"}/5
+                      {p.avg_effectiveness?.toFixed(1) ?? "—"}/5 effectiveness
                     </span>
                     <span className="text-xs font-semibold text-purple-600 group-hover:underline">
-                      View details →
+                      Shop brand →
                     </span>
                   </div>
                 </div>
-              </Link>
+              </a>
             );
           })}
         </div>
