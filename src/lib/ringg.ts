@@ -79,7 +79,7 @@ export class RinggClient {
     const fromNumberId = cleanEnv(process.env.RINGG_FROM_NUMBER_ID);
     formData.append('call_config', JSON.stringify({ from_number_id: fromNumberId }));
     formData.append('country_code', countryCode);
-    const now = new Date();
+    const now = new Date(Date.now() + 6 * 60 * 1000); // 6 min in future (Ringg requires 5+)
     const endTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const fmtRingg = (d: Date) => {
       const dd = String(d.getUTCDate()).padStart(2, '0');
