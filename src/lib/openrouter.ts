@@ -1,13 +1,20 @@
 import OpenAI from 'openai'
 
-const client = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-  defaultHeaders: {
-    'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    'X-Title': 'TrueGlow',
-  },
-})
+let _client: OpenAI | null = null
+
+function getClient() {
+  if (!_client) {
+    _client = new OpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: process.env.OPENROUTER_API_KEY || 'placeholder',
+      defaultHeaders: {
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+        'X-Title': 'TrueGlow',
+      },
+    })
+  }
+  return _client
+}
 
 const MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4-5'
 
@@ -20,7 +27,7 @@ export async function enrichTranscript(
     .map(t => `${t.speaker === 'agent' ? 'Ava (Agent)' : 'Customer'}: ${t.text}`)
     .join('\n')
 
-  const response = await client.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: MODEL,
     messages: [
       {
@@ -54,7 +61,7 @@ export async function generateInsightStatements(
   productName: string,
   aggregatedData: Record<string, unknown>
 ) {
-  const response = await client.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: MODEL,
     messages: [
       {
@@ -85,7 +92,7 @@ export async function generateRecommendationReasoning(
   profile: Record<string, unknown>,
   products: Array<{ name: string; data: Record<string, unknown> }>
 ) {
-  const response = await client.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: MODEL,
     messages: [
       {
