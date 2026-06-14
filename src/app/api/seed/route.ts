@@ -383,11 +383,156 @@ async function runSeed(db: ReturnType<typeof createServerClient>) {
     console.error('[seed] wash recompute failed:', e)
   );
 
+  // ── 5. Insert demo marketplace products for remaining categories ────────
+  const demoProducts = [
+    {
+      product_name: 'Ceramide & Niacinamide Moisturizer',
+      brand_name: 'Foxtale',
+      category: 'skincare_moisturizer',
+      total_verified_conversations: 48,
+      voice_trust_score: 84,
+      avg_texture: 4.6, avg_effectiveness: 4.7, avg_fragrance: 3.9, avg_value: 4.5, avg_packaging: 4.4,
+      sentiment_distribution: { positive: 38, neutral: 7, negative: 3 },
+      repurchase_distribution: { definitely_yes: 28, probably_yes: 14, unsure: 4, probably_no: 2, definitely_no: 0 },
+      works_best_for: [
+        { profile: 'dry_skin', satisfaction: 4.8, note: '94% noticed softer skin within 3 days' },
+        { profile: 'sensitive_skin', satisfaction: 4.5, note: 'Ceramides calmed reactivity in 87% of users' },
+      ],
+      not_ideal_for: [{ profile: 'acne-prone oily skin', reason: 'May feel heavy during summer months' }],
+      top_insights: [
+        '89% felt immediate hydration boost on first use',
+        'Ceramide barrier noticeably strengthened after 2 weeks',
+        'Fragrance-free formula preferred by sensitive skin users',
+      ],
+      common_questions: [
+        { question: 'Can I use it under SPF?', answer: '92% of users layer it under sunscreen with no pilling.' },
+        { question: 'Does it work for combination skin?', answer: '78% combination-skin users reported balanced hydration.' },
+      ],
+      education_gaps: [{ mistake: 'Applying on damp skin for better absorption', percentage: 34, tip: 'Pat skin dry lightly, then apply within 60 seconds for best penetration.' }],
+      issue_summary: [{ issue: 'Slight white cast on darker skin tones', percentage: 8, severity: 'mild' as const, is_dealbreaker: false }],
+    },
+    {
+      product_name: '2% Salicylic Acid Toner',
+      brand_name: 'Minimalist',
+      category: 'skincare_toner',
+      total_verified_conversations: 52,
+      voice_trust_score: 79,
+      avg_texture: 4.4, avg_effectiveness: 4.6, avg_fragrance: 4.2, avg_value: 4.8, avg_packaging: 4.1,
+      sentiment_distribution: { positive: 40, neutral: 8, negative: 4 },
+      repurchase_distribution: { definitely_yes: 30, probably_yes: 15, unsure: 5, probably_no: 2, definitely_no: 0 },
+      works_best_for: [
+        { profile: 'oily_skin', satisfaction: 4.8, note: '91% reported reduced blackheads in 3 weeks' },
+        { profile: 'acne_prone', satisfaction: 4.6, note: 'Pore-clearing effect confirmed by 84% of users' },
+      ],
+      not_ideal_for: [{ profile: 'dry or compromised skin', reason: 'BHA exfoliation can increase dryness without moisturizer follow-up' }],
+      top_insights: [
+        '91% of oily-skin users saw reduced blackheads within 3 weeks',
+        'Best results when used 3×/week not daily — 68% users over-used initially',
+        'Pairs well with niacinamide serum — 76% users combine both',
+      ],
+      common_questions: [
+        { question: 'Can I use it daily?', answer: 'Start 3×/week. Only 22% of daily users reported better results vs 3×/week.' },
+        { question: 'Can I use it with Niacinamide Serum?', answer: 'Yes — 76% of users combine both with great results.' },
+      ],
+      education_gaps: [{ mistake: 'Using daily instead of 3x per week', percentage: 42, tip: 'BHA needs rest days. Use Mon/Wed/Fri for best results without over-exfoliation.' }],
+      issue_summary: [{ issue: 'Dryness when used daily', percentage: 18, severity: 'mild' as const, is_dealbreaker: false }],
+    },
+    {
+      product_name: 'SPF 50 PA++++ Sunscreen',
+      brand_name: 'Minimalist',
+      category: 'skincare_sunscreen',
+      total_verified_conversations: 61,
+      voice_trust_score: 88,
+      avg_texture: 4.7, avg_effectiveness: 4.8, avg_fragrance: 4.3, avg_value: 4.9, avg_packaging: 4.5,
+      sentiment_distribution: { positive: 52, neutral: 6, negative: 3 },
+      repurchase_distribution: { definitely_yes: 42, probably_yes: 14, unsure: 3, probably_no: 2, definitely_no: 0 },
+      works_best_for: [
+        { profile: 'all_skin_types', satisfaction: 4.8, note: 'No white cast on medium-to-dark skin tones' },
+        { profile: 'oily_skin', satisfaction: 4.9, note: 'Matte finish — 96% preferred over previous sunscreen' },
+      ],
+      not_ideal_for: [{ profile: 'very dry skin', reason: 'Matte finish may feel tight without a moisturizer underneath' }],
+      top_insights: [
+        'No white cast — top reason 89% switched from their previous SPF',
+        'Wears well under makeup for 8+ hours per 78% of users',
+        'PA++++ rating trusted more than most Indian brands at this price',
+      ],
+      common_questions: [
+        { question: 'Does it leave a white cast?', answer: '89% of users reported no white cast, even on NC40+ skin tones.' },
+        { question: 'Can I use it under makeup?', answer: '78% use it under foundation daily with no pilling.' },
+      ],
+      education_gaps: [{ mistake: 'Not reapplying after 2 hours outdoors', percentage: 58, tip: 'Reapply every 2 hours in direct sun for SPF protection to hold.' }],
+      issue_summary: [{ issue: 'Slight stinging around eyes', percentage: 6, severity: 'mild' as const, is_dealbreaker: false }],
+    },
+    {
+      product_name: 'Full Damage Repair Shampoo',
+      brand_name: 'Plum',
+      category: 'haircare_shampoo',
+      total_verified_conversations: 38,
+      voice_trust_score: 76,
+      avg_texture: 4.3, avg_effectiveness: 4.4, avg_fragrance: 4.7, avg_value: 4.5, avg_packaging: 4.2,
+      sentiment_distribution: { positive: 28, neutral: 7, negative: 3 },
+      repurchase_distribution: { definitely_yes: 20, probably_yes: 13, unsure: 3, probably_no: 2, definitely_no: 0 },
+      works_best_for: [
+        { profile: 'damaged_hair', satisfaction: 4.6, note: '82% noticed reduced breakage after 4 weeks' },
+        { profile: 'color_treated', satisfaction: 4.4, note: 'Sulphate-free formula preserved color vibrancy' },
+      ],
+      not_ideal_for: [{ profile: 'very oily scalp', reason: 'Rich formula may require double wash for oily scalps' }],
+      top_insights: [
+        'Bamboo extract visibly reduced split ends for 74% of users',
+        'Fragrance rated best-in-class — 91% loved the scent',
+        'Sulphate-free: colour stays 2–3 washes longer than regular shampoo',
+      ],
+      common_questions: [
+        { question: 'Is it sulphate-free?', answer: 'Yes — 91% of colour-treated hair users reported less fade vs. regular shampoo.' },
+        { question: 'How often should I use it?', answer: '68% of users with normal-dry hair wash 2-3x per week for best results.' },
+      ],
+      education_gaps: [{ mistake: 'Applying directly to roots without diluting', percentage: 29, tip: 'Dilute a small amount in water first for even distribution on scalp.' }],
+      issue_summary: [{ issue: 'Lather feels lower than regular shampoo', percentage: 22, severity: 'mild' as const, is_dealbreaker: false }],
+    },
+    {
+      product_name: 'Full Damage Repair Conditioner',
+      brand_name: 'Plum',
+      category: 'haircare_conditioner',
+      total_verified_conversations: 34,
+      voice_trust_score: 78,
+      avg_texture: 4.5, avg_effectiveness: 4.5, avg_fragrance: 4.6, avg_value: 4.4, avg_packaging: 4.1,
+      sentiment_distribution: { positive: 26, neutral: 6, negative: 2 },
+      repurchase_distribution: { definitely_yes: 19, probably_yes: 12, unsure: 2, probably_no: 1, definitely_no: 0 },
+      works_best_for: [
+        { profile: 'dry_damaged_hair', satisfaction: 4.7, note: '86% noticed detangling improvement after first use' },
+        { profile: 'frizzy_hair', satisfaction: 4.5, note: 'Humidity resistance confirmed by 79% of users' },
+      ],
+      not_ideal_for: [{ profile: 'fine hair', reason: 'Rich formula can weigh down very fine or limp hair' }],
+      top_insights: [
+        '86% noticed easier detangling from first wash',
+        'Frizz control lasts through humid days per 79% of users',
+        'Apply mid-length to ends only — roots don't need conditioner',
+      ],
+      common_questions: [
+        { question: 'Should I apply it to roots?', answer: 'No — 88% of users with best results apply only mid-length to ends.' },
+        { question: 'How long should I leave it on?', answer: '3-5 minutes is optimal — 2 minutes showed 40% lower efficacy in user reports.' },
+      ],
+      education_gaps: [{ mistake: 'Applying conditioner to the scalp/roots', percentage: 44, tip: 'Apply only from mid-length to ends. Scalp produces natural oils that conditioner disrupts.' }],
+      issue_summary: [{ issue: 'Buildup if overused on fine hair', percentage: 12, severity: 'mild' as const, is_dealbreaker: false }],
+    },
+  ];
+
+  // Delete existing demo products first
+  for (const dp of demoProducts) {
+    await db.from('marketplace_products')
+      .delete()
+      .eq('product_name', dp.product_name)
+      .eq('brand_name', dp.brand_name);
+  }
+
+  const { error: demoErr } = await db.from('marketplace_products').insert(demoProducts);
+  if (demoErr) console.error('[seed] demo products insert failed:', demoErr.message);
+
   return NextResponse.json({
     success: true,
     campaigns: 2,
     callRecords: callRecordsInserted,
     productIntelligence: piInserted,
-    marketplaceProducts: 2,
+    marketplaceProducts: 2 + (demoErr ? 0 : demoProducts.length),
   });
 }

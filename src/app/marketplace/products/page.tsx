@@ -3,24 +3,27 @@ import type { MarketplaceProduct } from "@/lib/types";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
-// Brand website and product image mapping
-const BRAND_META: Record<string, { siteUrl: string; image?: string }> = {
-  Minimalist: {
-    siteUrl: "https://beminimalist.co/",
-    image: "https://beminimalist.co/cdn/shop/products/10-Niacinamide-Serum_3.jpg",
-  },
-  Plum: {
-    siteUrl: "https://plumgoodness.com/",
-    image: "https://plumgoodness.com/cdn/shop/products/plum-green-tea-pore-cleansing-face-wash_540x.jpg",
-  },
-  Foxtale: { siteUrl: "https://foxtale.in/" },
+const BRAND_META: Record<string, { siteUrl: string }> = {
+  Minimalist: { siteUrl: "https://beminimalist.co/" },
+  Plum:       { siteUrl: "https://plumgoodness.com/" },
+  Foxtale:    { siteUrl: "https://foxtale.in/" },
+};
+
+const PRODUCT_IMAGES: Record<string, string> = {
+  "10% Niacinamide + Zinc Serum":         "https://beminimalist.co/cdn/shop/products/10-Niacinamide-Serum_3.jpg",
+  "2% Salicylic Acid Toner":              "https://beminimalist.co/cdn/shop/files/2-Salicylic-Acid-BHA-Toner-100-ml.jpg",
+  "SPF 50 PA++++ Sunscreen":              "https://beminimalist.co/cdn/shop/files/Sunscreen-SPF-50-PA-50ml.jpg",
+  "Green Tea Pore Cleansing Face Wash":   "https://plumgoodness.com/cdn/shop/products/plum-green-tea-pore-cleansing-face-wash_540x.jpg",
+  "Full Damage Repair Shampoo":           "https://plumgoodness.com/cdn/shop/products/shampoo-for-damaged-hair_540x.jpg",
+  "Full Damage Repair Conditioner":       "https://plumgoodness.com/cdn/shop/products/conditioner-for-damaged-hair_540x.jpg",
+  "Ceramide & Niacinamide Moisturizer":   "https://foxtale.in/cdn/shop/products/ceramide-niacinamide-moisturizer_540x.jpg",
 };
 
 function brandSiteUrl(brandName: string): string {
   return BRAND_META[brandName]?.siteUrl ?? "#";
 }
-function productImage(brandName: string): string | undefined {
-  return BRAND_META[brandName]?.image;
+function productImage(productName: string): string | undefined {
+  return PRODUCT_IMAGES[productName];
 }
 
 export const dynamic = "force-dynamic";
@@ -97,7 +100,7 @@ export default async function ProductsPage() {
             const sentTotal = Math.max(p.total_verified_conversations, 1);
             const positivePct = Math.round((p.sentiment_distribution.positive / sentTotal) * 100);
 
-            const img = productImage(p.brand_name);
+            const img = productImage(p.product_name);
             const siteUrl = brandSiteUrl(p.brand_name);
 
             return (
