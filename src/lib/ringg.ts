@@ -78,7 +78,7 @@ export class RinggClient {
     if (agentId) formData.append('agent_id', agentId);
     const fromNumberId = cleanEnv(process.env.RINGG_FROM_NUMBER_ID);
     formData.append('call_config', JSON.stringify({ from_number_id: fromNumberId }));
-    formData.append('country_code', countryCode);
+    formData.append('country_code', 'IN');
     // Ringg.ai uses IST (UTC+5:30). Format times in IST with 10min start buffer.
     const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
     const fmtRingg = (utcMs: number) => {
