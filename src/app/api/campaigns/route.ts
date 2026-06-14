@@ -1,83 +1,95 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
-import { createCampaign, startCampaign, registerWebhook } from '@/lib/ringg'
+import { NextRequest, NextResponse } from 'next/server';
+import Papa from 'papaparse';
+import { createCampaign, getCampaigns } from '@/lib/db';
+import { ringg } from '@/lib/ringg';
+import { detectCategory } from '@/lib/category-detector';
 
-export async function POST(req: NextRequest) {
+export async function GET() {
   try {
-    const body = await req.json()
-    const { name, product_name, product_category, brand_name, contacts } = body
-
-    if (!name || !product_name || !contacts?.length) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-    }
-
-    const db = createServerClient()
-
-    // 1. Create campaign in DB first
-    const { data: campaign, error: dbErr } = await db
-      .from('campaigns')
-      .insert({
-        name,
-        product_name,
-        product_category: product_category || 'serum',
-        brand_name: brand_name || 'Unknown',
-        total_contacts: contacts.length,
-        status: 'draft',
-      })
-      .select()
-      .single()
-
-    if (dbErr || !campaign) {
-      return NextResponse.json({ error: dbErr?.message || 'DB error' }, { status: 500 })
-    }
-
-    // 2. Insert queued call records
-    const callRecords = contacts.map((c: Record<string, string>) => ({
-      campaign_id: campaign.id,
-      contact_phone: c.phone,
-      contact_name: c.name || null,
-      status: 'queued',
-    }))
-    await db.from('call_records').insert(callRecords)
-
-    // 3. Create Ringg.ai campaign
-    let ringgCampaignId: string | null = null
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-
-    try {
-      const ringgCampaign = await createCampaign(name, contacts)
-      ringgCampaignId = ringgCampaign.id || ringgCampaign.campaign_id
-
-      if (ringgCampaignId) {
-        // 4. Start campaign
-        await startCampaign(ringgCampaignId)
-
-        // 5. Register webhook
-        const webhookUrl = `${appUrl}/api/webhook/ringg?campaign_id=${campaign.id}`
-        await registerWebhook(ringgCampaignId, webhookUrl)
-
-        // 6. Update DB with Ringg campaign ID
-        await db
-          .from('campaigns')
-          .update({ ringg_campaign_id: ringgCampaignId, status: 'active', webhook_registered: true })
-          .eq('id', campaign.id)
-      }
-    } catch (ringgErr) {
-      console.error('Ringg.ai error (campaign still created in DB):', ringgErr)
-      // Don't fail — campaign is in DB, mark as active for demo
-      await db.from('campaigns').update({ status: 'active' }).eq('id', campaign.id)
-    }
-
-    return NextResponse.json({ campaign: { ...campaign, ringg_campaign_id: ringgCampaignId } })
+    const campaigns = await getCampaigns();
+    return NextResponse.json(campaigns);
   } catch (err) {
-    console.error('Campaign creation error:', err)
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    console.error('[campaigns] GET failed:', err);
+    return NextResponse.json({ error: 'Failed to fetch campaigns' }, { status: 500 });
   }
 }
 
-export async function GET() {
-  const db = createServerClient()
-  const { data, error } = await db.from('campaigns').select('*').order('created_at', { ascending: false })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ campaigns: data })
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File | null;
+    const campaignName = formData.get('campaign_name') as string;
+    const productName = formData.get('product_name') as string;
+    const brandName = formData.get('brand_name') as string | null ?? 'Demo Brand';
+
+    if (!file || !campaignName || !productName) {
+      return NextResponse.json(
+        { error: 'Missing required fields: file, campaign_name, product_name' },
+        { status: 400 }
+      );
+    }
+
+    // Parse CSV
+    const csvText = await file.text();
+    const { data: rows, errors } = Papa.parse<Record<string, string>>(csvText, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    if (errors.length > 0 && rows.length === 0) {
+      return NextResponse.json({ error: 'Invalid CSV file', details: errors }, { status: 400 });
+    }
+
+    // Validate required column
+    if (rows.length === 0 || !('mobile_number' in rows[0])) {
+      return NextResponse.json(
+        { error: "Required column 'mobile_number' not found in CSV" },
+        { status: 400 }
+      );
+    }
+
+    const category = detectCategory(productName);
+
+    // Create Ringg.ai campaign list
+    let ringgListId: string | undefined;
+    let ringgCampaignId: string | undefined;
+
+    try {
+      const ringgResult = await ringg.createCampaign({
+        name: campaignName,
+        contacts: rows.map((r) => ({
+          mobile_number: r.mobile_number ?? r.phone ?? '',
+          name: r.name ?? r.customer_name ?? '',
+          product_name: productName,
+          brand_name: brandName,
+        })),
+      });
+      ringgListId = ringgResult.list_id;
+      ringgCampaignId = ringgResult.campaign_id;
+    } catch (err) {
+      console.error('[campaigns] Ringg.ai createCampaign failed:', err);
+      return NextResponse.json(
+        { error: 'Failed to create campaign in Ringg.ai', details: String(err) },
+        { status: 502 }
+      );
+    }
+
+    const campaign = await createCampaign({
+      brand_name: brandName,
+      campaign_name: campaignName,
+      product_name: productName,
+      category,
+      ringg_campaign_id: ringgCampaignId,
+      ringg_list_id: ringgListId,
+    });
+
+    // Update total_contacts count
+    const { updateCampaign } = await import('@/lib/db');
+    await updateCampaign(campaign.id, { total_contacts: rows.length }).catch(() => {});
+
+    return NextResponse.json({ ...campaign, total_contacts: rows.length }, { status: 201 });
+  } catch (err) {
+    console.error('[campaigns] POST failed:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

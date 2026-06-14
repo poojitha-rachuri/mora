@@ -1,62 +1,114 @@
-const RINGG_BASE = 'https://api.ringg.ai/v1'
-const API_KEY = process.env.RINGG_API_KEY!
-const AGENT_ID = process.env.RINGG_AGENT_ID!
-const FROM_NUMBER_ID = process.env.RINGG_FROM_NUMBER_ID!
+const RINGG_BASE_URL = 'https://prod-api.ringg.ai/ca/api/v0';
 
-async function ringgFetch(path: string, options: RequestInit = {}) {
-  const res = await fetch(`${RINGG_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  })
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Ringg API ${path} ${res.status}: ${body}`)
+export class RinggClient {
+  private apiKey: string;
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
   }
-  return res.json()
+
+  private async request<T>(
+    method: string,
+    path: string,
+    body?: Record<string, unknown> | FormData
+  ): Promise<T> {
+    const headers: Record<string, string> = {
+      'X-API-KEY': this.apiKey,
+    };
+
+    let bodyContent: BodyInit | undefined;
+    if (body instanceof FormData) {
+      bodyContent = body;
+    } else if (body) {
+      headers['Content-Type'] = 'application/json';
+      bodyContent = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${RINGG_BASE_URL}${path}`, {
+      method,
+      headers,
+      body: bodyContent,
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => response.statusText);
+      throw new Error(`Ringg.ai API error ${response.status}: ${text}`);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  async getAssistants(): Promise<unknown[]> {
+    return this.request<unknown[]>('GET', '/agent/v1');
+  }
+
+  async getNumbers(): Promise<unknown[]> {
+    return this.request<unknown[]>('GET', '/number/v1');
+  }
+
+  async createCampaign(params: {
+    name: string;
+    contacts: Array<{ mobile_number: string; name?: string; [key: string]: string | undefined }>;
+  }): Promise<{ list_id: string; campaign_id: string }> {
+    const formData = new FormData();
+
+    // Create CSV content
+    const headers = Object.keys(params.contacts[0] ?? { mobile_number: '', name: '' });
+    const csvLines = [
+      headers.join(','),
+      ...params.contacts.map((c) =>
+        headers.map((h) => `"${(c[h] ?? '').replace(/"/g, '""')}"`).join(',')
+      ),
+    ];
+    const csvBlob = new Blob([csvLines.join('\n')], { type: 'text/csv' });
+    formData.append('file', csvBlob, `${params.name}.csv`);
+    formData.append('name', params.name);
+
+    return this.request('POST', '/campaign/save', formData);
+  }
+
+  async startCampaign(params: {
+    agentId: string;
+    listId: string;
+    fromNumberId: string;
+    callbackUrl?: string;
+  }): Promise<{ success: boolean; campaign_id: string }> {
+    return this.request('POST', '/campaign/start', {
+      agent_id: params.agentId,
+      list_id: params.listId,
+      from_number_id: params.fromNumberId,
+      callback_url: params.callbackUrl,
+    });
+  }
+
+  async getCampaigns(): Promise<unknown[]> {
+    return this.request<unknown[]>('GET', '/campaign/v1');
+  }
+
+  async getCallHistory(
+    bulkListId: string,
+    limit = 100,
+    offset = 0
+  ): Promise<{ calls: unknown[]; total: number }> {
+    return this.request('GET', `/calling/history?bulk_list_id=${bulkListId}&limit=${limit}&offset=${offset}`);
+  }
+
+  async terminateCampaign(campaignId: string): Promise<{ success: boolean }> {
+    return this.request('POST', `/campaign/terminate/${campaignId}`);
+  }
+
+  async setupWebhooks(params: {
+    agentId: string;
+    callbackUrl: string;
+    secret?: string;
+  }): Promise<{ success: boolean }> {
+    return this.request('PATCH', '/agent/v1', {
+      id: params.agentId,
+      webhook_url: params.callbackUrl,
+      webhook_secret: params.secret,
+      webhook_events: ['call_started', 'call_completed', 'all_processing_completed'],
+    });
+  }
 }
 
-export interface RinggContact {
-  phone: string
-  name?: string
-  product_name?: string
-  purchase_date?: string
-  [key: string]: string | undefined
-}
-
-export async function createCampaign(name: string, contacts: RinggContact[]) {
-  return ringgFetch('/campaigns', {
-    method: 'POST',
-    body: JSON.stringify({
-      name,
-      agent_id: AGENT_ID,
-      from_number_id: FROM_NUMBER_ID,
-      contacts: contacts.map(c => ({
-        phone_number: c.phone,
-        variables: {
-          customer_name: c.name || 'Customer',
-          product_name: c.product_name || '',
-          purchase_date: c.purchase_date || '',
-        },
-      })),
-    }),
-  })
-}
-
-export async function startCampaign(ringgCampaignId: string) {
-  return ringgFetch(`/campaigns/${ringgCampaignId}/start`, { method: 'POST' })
-}
-
-export async function registerWebhook(ringgCampaignId: string, webhookUrl: string) {
-  return ringgFetch(`/campaigns/${ringgCampaignId}/webhook`, {
-    method: 'POST',
-    body: JSON.stringify({ url: webhookUrl, events: ['call_started', 'call_completed', 'all_processing_completed'] }),
-  })
-}
-
-export async function getCampaignStatus(ringgCampaignId: string) {
-  return ringgFetch(`/campaigns/${ringgCampaignId}`)
-}
+export const ringg = new RinggClient(process.env.RINGG_API_KEY ?? '');
