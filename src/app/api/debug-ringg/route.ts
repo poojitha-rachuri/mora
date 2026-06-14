@@ -33,7 +33,7 @@ export async function GET() {
   try {
     campaignResult = await ringg.createCampaign({
       name: 'MORA Debug Test',
-      contacts: [{ mobile_number: '919999999999', name: 'Test User' }],
+      contacts: [{ mobile_number: '9999999999', name: 'Test User' }],
     });
   } catch (err) {
     campaignError = err instanceof Error ? err.message : String(err);
